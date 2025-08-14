@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Between Duty and Defiance</title>
+  <meta name="description" content="Interactive historical simulation set in Berlin (1933–1943). Navigate suspicion, morality, and privilege under Nazi rule."/>
+  <style>
+    :root{
+      --bg:#111;
+      --panel:#1b1b1b;
+      --text:#f2f2f2;
+      --accent:#b30000;
+      --accent-2:#d32;
+      --muted:#9a9a9a;
+      --bar-bg:#333;
+      --good:#2e9d46;
+      --warn:#c89c00;
+      --bad:#b30000;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 20% 0%, #161616 0%, #0f0f0f 60%, #0a0a0a 100%);
+      color:var(--text);
+      font-family: ui-serif, Georgia, "Times New Roman", Times, serif;
+      line-height:1.55;
+    }
+    .container{
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      margin-bottom: 12px;
+    }
+    h1{
+      margin:0;
+      font-weight:700;
+      letter-spacing:.3px;
+      color:var(--accent);
+      font-size: clamp(1.4rem, 2.2vw, 2rem);
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:.95rem;
+    }
+    .panel{
+      background: linear-gradient(180deg, #181818, #141414);
+      border:1px solid #242424;
+      border-radius:14px;
+      padding:18px 18px 8px;
+      box-shadow: 0 10px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+    }
+
+    /* Stats */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin: 8px 0 2px;
+    }
+    .stat{
+      background:#151515;
+      border:1px solid #232323;
+      border-radius:12px;
+      padding:10px 12px;
+    }
+    .stat h4{
+      margin:0;
+      font-size:.9rem;
+      color:#ddd;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .bar{
+      height:9px;
+      background:var(--bar-bg);
+      border-radius:99px;
+      margin-top:6px;
+      overflow:hidden;
+    }
+    .fill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .35s ease;
+    }
+    .fill.good{ background: linear-gradient(90deg, #1fa84d, #2fd673);}
+    .fill.warn{ background:linear-gradient(90deg, #d1a000, #ffd13d);}
+    .fill.priv{ background:linear-gradient(90deg, #9d7dff, #8bd0ff);}
+
+    /* Narrative */
+    h2{
+      color:var(--accent);
+      margin: 6px 0 6px;
+      font-size: clamp(1.15rem, 2vw, 1.4rem);
+    }
+    .date{
+      color:#ccc;
+      font-size:.93rem;
+      margin-bottom:8px;
+      opacity:.9;
+    }
+    .narrative{
+      margin: 8px 0 14px;
+      font-size:1.02rem;
+    }
+
+    /* Choice styles (rotated) */
+    .choices{ display:grid; gap:10px; margin: 8px 0 12px; }
+    .btn{
+      background:var(--accent);
+      border:1px solid #7a0000;
+      color:white;
+      padding:11px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      font-size:1rem;
+      letter-spacing:.2px;
+      transition: all .15s ease;
+    }
+    .btn:hover{ background:#cf0000; transform: translateY(-1px);}
+    .btn.ghost{
+      background:#202020;
+      border:1px solid #2b2b2b;
+    }
+    .btn.ghost:hover{ background:#2a2a2a; }
+    .choice-paras p{
+      background:#171717;
+      border:1px solid #242424;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      margin:0;
+    }
+    .choice-paras p:hover{ outline:1px solid #2a2a2a; background:#1a1a1a;}
+    .choice-cards{
+      display:grid; gap:10px;
+      grid-template-columns: 1fr;
+    }
+    .card{
+      background:#141414;
+      border:1px solid #242424;
+      border-radius:12px;
+      padding:12px;
+      transition:.15s ease;
+      cursor:pointer;
+    }
+    .card:hover{ background:#191919; transform:translateY(-1px); }
+    .card h5{ margin:0 0 6px; color:#eee; font-size:1rem; }
+    .card small{ color:#aaa; }
+    .choice-radio{
+      background:#141414;
+      border:1px solid #242424;
+      border-radius:12px;
+      padding:12px;
+    }
+    .choice-radio label{
+      display:flex; gap:10px; align-items:flex-start;
+      padding:8px 6px;
+      border-radius:8px;
+      cursor:pointer;
+    }
+    .choice-radio label:hover{ background:#1b1b1b; }
+    .confirm-row{ display:flex; justify-content:flex-end; margin-top:8px;}
+
+    /* Alerts / log */
+    .alerts{
+      margin: 8px 0 10px;
+      display:grid; gap:8px;
+    }
+    .alert{
+      border-radius:10px;
+      padding:10px 12px;
+      font-size:.95rem;
+      border:1px solid;
+    }
+    .alert.info{ background:#13181f; border-color:#223246; color:#cfe8ff;}
+    .alert.warn{ background:#1c1505; border-color:#3d2a00; color:#ffd480;}
+    .alert.bad{ background:#200d0d; border-color:#3b1212; color:#ffb1b1;}
+    .alert.good{ background:#0f1e14; border-color:#203627; color:#b7ffd0;}
+
+    /* Footer controls */
+    .footer{
+      display:flex; gap:8px; justify-content:space-between; align-items:center;
+      margin-top:10px; padding-top:10px; border-top:1px dashed #2a2a2a;
+      color:#bdbdbd; font-size:.92rem;
+    }
+    .tag{ padding:3px 8px; border:1px solid #2a2a2a; border-radius:99px; background:#161616;}
+    .muted{ color:#a8a8a8;}
+    .small{ font-size:.9rem; color:#aaa;}
+    .center{ text-align:center; }
+
+    /* Mobile tweaks */
+    @media (min-width: 700px){
+      .choice-cards{ grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Between Duty and Defiance</h1>
+        <div class="subtitle">Berlin, 1933–1943 · An interactive historical simulation</div>
+      </div>
+      <div class="tag" id="progressTag">Event 0 / 10</div>
+    </header>
+
+    <div class="panel" id="game"></div>
+  </div>
+
+  <script>
+  // =========================
+  // Core State & Utilities
+  // =========================
+  const maleNames = ["Friedrich","Heinrich","Otto","Klaus","Werner","Rolf","Günter","Martin","Erich","Alfred"];
+  const femaleNames = ["Liesel","Greta","Inge","Helga","Anneliese","Hilde","Erika","Ursula","Gerda","Marta"];
+
+  let gender = "";      // 'boy' or 'girl'
+  let playerName = "";
+  let eventIndex = 0;   // 0..10 (10 = end)
+  let path = "";        // 'resistance' or 'collaboration' (set at Event 2)
+  let warnedOnce = false;
+  let interrogatedOnce = false;
+  let privilegeShieldUsed = false;
+  let promotedShown = false;
+  let modelShown = false;
+  let arrested = false;
+
+  // Stats
+  let suspicion = 0;
+  let morality = 50;
+  let privilege = 50;
+
+  const gameEl = document.getElementById('game');
+  const progressTag = document.getElementById('progressTag');
+
+  function clamp(v, min=0, max=100){ return Math.max(min, Math.min(max, v)); }
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function pickName(){
+    return gender === 'boy' ? rand(maleNames) : rand(femaleNames);
+  }
+
+  function updateProgress(){
+    progressTag.textContent = `Event ${Math.min(eventIndex,10)} / 10`;
+  }
+
+  function statFillClass(which, value){
+    if(which==='morality'){
+      if(value>=70) return 'fill good';
+      if(value<=30) return 'fill warn';
+      return 'fill';
+    }
+    if(which==='suspicion'){
+      if(value>=70) return 'fill bad';
+      if(value>=40) return 'fill warn';
+      return 'fill';
+    }
+    // privilege
+    if(value>=70) return 'fill priv';
+    return 'fill';
+  }
+
+  function statsView(){
+    return `
+    <div class="stats">
+      <div class="stat">
+        <h4>Suspicion <span>😨 ${suspicion}</span></h4>
+        <div class="bar"><div class="${statFillClass('suspicion', suspicion)}" style="width:${suspicion}%"></div></div>
+      </div>
+      <div class="stat">
+        <h4>Morality & Courage <span>❤️ ${morality}</span></h4>
+        <div class="bar"><div class="${statFillClass('morality', morality)}" style="width:${morality}%"></div></div>
+      </div>
+      <div class="stat">
+        <h4>Privilege <span>🛡️ ${privilege}</span></h4>
+        <div class="bar"><div class="${statFillClass('privilege', privilege)}" style="width:${privilege}%"></div></div>
+      </div>
+    </div>`;
+  }
+
+  function alertsView(alerts){
+    if(!alerts || !alerts.length) return "";
+    return `<div class="alerts">
+      ${alerts.map(a => `<div class="alert ${a.type}">${a.text}</div>`).join('')}
+    </div>`;
+  }
+
+  // Rotate choice presentation styles per event to avoid repetition.
+  function renderChoices(choices, onChoose, styleIdx){
+    // Randomize order so resistant/neutral/obedient rotate position each time
+    const shuffled = choices.map(c => ({...c, _r: Math.random()})).sort((a,b)=>a._r-b._r);
+
+    if(styleIdx % 4 === 0){
+      // Buttons
+      return `<div class="choices">
+        ${shuffled.map((c,i)=>`<button class="btn"
+          onclick="${onChoose}('${c.id}')">${c.label}</button>`).join('')}
+      </div>`;
+    }
+    if(styleIdx % 4 === 1){
+      // Paragraph taps
+      return `<div class="choice-paras">
+        ${shuffled.map(c=>`<p onclick="${onChoose}('${c.id}')">${c.label}</p>`).join('')}
+      </div>`;
+    }
+    if(styleIdx % 4 === 2){
+      // Cards
+      return `<div class="choice-cards">
+        ${shuffled.map(c=>`
+          <div class="card" onclick="${onChoose}('${c.id}')">
+            <h5>${c.title || 'Option'}</h5>
+            <div>${c.label}</div>
+            ${c.note ? `<small>${c.note}</small>` : ``}
+          </div>
+        `).join('')}
+      </div>`;
+    }
+    // Radios + Confirm (no numeric list)
+    const group = `g${Math.floor(Math.random()*1e6)}`;
+    return `
+      <div class="choice-radio">
+        ${shuffled.map(c=>`
+          <label>
+            <input type="radio" name="${group}" value="${c.id}"/>
+            <div>${c.label}</div>
+          </label>
+        `).join('')}
+        <div class="confirm-row">
+          <button class="btn ghost" onclick="(function(){
+            const sel=[...document.getElementsByName('${group}')].find(r=>r.checked);
+            if(sel){ ${onChoose}(sel.value); }
+          })()">Confirm</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function applyDeltas({sus=0, mc=0, priv=0}){
+    suspicion = clamp(suspicion + sus);
+    morality  = clamp(morality + mc);
+    privilege = clamp(privilege + priv);
+  }
+
+  function thresholdChecks(alerts){
+    // Promotions (Privilege ≥ 70, then ≥ 90)
+    if(privilege >= 70 && !promotedShown){
+      promotedShown = true;
+      alerts.push({type:'good', text: gender==='boy'
+        ? "Promotion in Hitler Youth. Extra rations and a better uniform issued."
+        : "Commended in League of German Girls. Extra ration vouchers arrive."});
+    }
+    if(privilege >= 90 && !modelShown){
+      modelShown = true;
+      alerts.push({type:'good', text: "You are praised in local propaganda as a “Model Aryan Youth.” Your family receives public notice."});
+    }
+
+    // Suspicion warnings
+    if(suspicion >= 40 && !warnedOnce){
+      warnedOnce = true;
+      alerts.push({type:'warn', text: "A local party official visits your family, advising ‘better attitude’ at school."});
+    }
+    // Interrogation
+    if(suspicion >= 70 && !interrogatedOnce){
+      interrogatedOnce = true;
+      if(privilege >= 70 && !privilegeShieldUsed){
+        privilegeShieldUsed = true;
+        alerts.push({type:'warn', text: "Summoned by the Gestapo for questioning—but your connections and awards smooth it over. You’re released with a warning."});
+      }else{
+        alerts.push({type:'bad', text: "Gestapo interrogation. Hours of questions and threats. You are on a list now."});
+      }
+    }
+    // Arrest
+    if(suspicion >= 100 && eventIndex >= 4){ // impossible before Event 4 per design
+      arrested = true;
+      alerts.push({type:'bad', text: "Arrested. You are transported to a concentration camp. The game ends here."});
+    }
+    return alerts;
+  }
+
+  function continueOrEnd(next){
+    if(arrested){
+      endgame(true);
+    }else{
+      next();
+    }
+  }
+
+  function genderLine(){
+    return gender==='boy' ? "Hitler Youth" : "League of German Girls";
+  }
+
+  // =========================
+  // Screens
+  // =========================
+  function startScreen(){
+    eventIndex = 0;
+    warnedOnce = interrogatedOnce = privilegeShieldUsed = false;
+    promotedShown = modelShown = false;
+    arrested = false;
+    path = "";
+    suspicion = 0; morality = 50; privilege = 50;
+    updateProgress();
+    gameEl.innerHTML = `
+      <h2>Choose Your Character</h2>
+      <div class="narrative">At the very start, you must choose who you are.</div>
+      ${statsView()}
+      <div class="choices">
+        <button class="btn" onclick="chooseGender('boy')">Boy (Hitler Youth)</button>
+        <button class="btn" onclick="chooseGender('girl')">Girl (League of German Girls)</button>
+      </div>
+      <div class="footer small">
+        <span class="muted">Immersive, historical, educational. Your choices affect suspicion, morality, and privilege.</span>
+      </div>
+    `;
+  }
+
+  function chooseGender(g){
+    gender = g;
+    playerName = pickName();
+    introScreen();
+  }
+
+  function introScreen(){
+    eventIndex = 0;
+    updateProgress();
+    gameEl.innerHTML = `
+      <h2>Welcome, ${playerName}</h2>
+      <div class="date">Berlin, 1933</div>
+      <div class="narrative">
+        I am fifteen. The streets hum with uniforms and flags. I belong to the <strong>${genderLine()}</strong>.
+        The older boys march; the girls stitch banners and practice first aid. At school, whispers fold into slogans.
+        The city feels smaller, and louder.
+      </div>
+      ${statsView()}
+      <div class="choices">
+        <button class="btn" onclick="event1()">Begin</button>
+      </div>
+      <div class="footer small">
+        <span class="muted">10 events. Some choices are safer. Some change who you become.</span>
+      </div>
+    `;
+  }
+
+  // =========================
+  // Event Implementations
+  // =========================
+
+  // Event 1 – Reichstag Fire (Feb 1933)
+  function event1(){
+    eventIndex = 1; updateProgress();
+    const alerts = [];
+    const body = `
+      <h2>Event 1 – Reichstag Fire</h2>
+      <div class="date">February 1933</div>
+      <div class="narrative">
+        Smoke stains the winter sky. At school the teacher orders: “An essay on why the Führer is Germany’s
+        salvation after the Reichstag burning.” My pencil hovers. The classroom smells of chalk and fear.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'defend', label:"Write an essay defending the Republic and the rule of law."},
+        {id:'plain',  label:"Hand in a flat, factual summary with no praise."},
+        {id:'praise', label:"Compose praise for Hitler and volunteer to read it aloud."}
+      ], 'chooseEvent1', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">School</span><span class="small">Your words echo beyond the classroom.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent1(id){
+    const alerts = [];
+    if(id==='defend'){ applyDeltas({sus:15, mc:10, priv:-10}); }
+    if(id==='plain'){  applyDeltas({sus:5,  mc:-5, priv:0});  }
+    if(id==='praise'){ applyDeltas({sus:-10, mc:-10, priv:15});}
+    thresholdChecks(alerts);
+    postChoice(alerts, event2);
+  }
+
+  // Event 2 – Nazi Curriculum Overhaul (School)
+  function event2(){
+    eventIndex = 2; updateProgress();
+    const isBoy = gender==='boy';
+    const alerts = [];
+    const body = `
+      <h2>Event 2 – Curriculum Overhaul</h2>
+      <div class="date">Spring 1933</div>
+      <div class="narrative">
+        New textbooks arrive: history bleached, biology twisted. A “History Club” meets after class.
+        ${isBoy ? "Drills and songs follow." : "We’re told our duty is ‘health and home.’"}
+        Some students slip to a secret philosophy circle in a cellar.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'refuse', label:"Refuse the club and attend the banned Philosophy Circle in the cellar."},
+        {id:'spy',    label:"Join the club but secretly take notes for the circle."},
+        {id:'prop',   label:"Join and help prepare a propaganda display for the hallway."}
+      ], 'chooseEvent2', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">School</span><span class="small">Your direction now will echo later.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent2(id){
+    const alerts = [];
+    if(id==='refuse'){ applyDeltas({sus:20, mc:15, priv:-15}); path='resistance'; }
+    if(id==='spy'){    applyDeltas({sus:10, mc:10, priv:-5});  path='resistance'; }
+    if(id==='prop'){   applyDeltas({sus:-10, mc:-10, priv:15}); path='collaboration';}
+    thresholdChecks(alerts);
+    postChoice(alerts, event3);
+  }
+
+  // Event 3 – Night of the Long Knives (Jun 1934)
+  function event3(){
+    eventIndex = 3; updateProgress();
+    const alerts = [];
+    const body = `
+      <h2>Event 3 – Night of the Long Knives</h2>
+      <div class="date">June 1934</div>
+      <div class="narrative">
+        Rumors: arrests in the night, gunshots no one heard. Our task: paste posters praising “order restored.”
+        The city exhales, but not with relief.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'refuseNotes', label:"Refuse and slip anonymous notes warning neighbors."},
+        {id:'quietPaste',  label:"Paste the posters quietly, avoid attention."},
+        {id:'extra',       label:"Paste extra prominently and lead the chant."}
+      ], 'chooseEvent3', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">Streets</span><span class="small">Night hides as much as it reveals.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent3(id){
+    const alerts = [];
+    if(id==='refuseNotes'){ applyDeltas({sus:25, mc:15, priv:-20}); }
+    if(id==='quietPaste'){  applyDeltas({sus:5,  mc:-5, priv:0});   }
+    if(id==='extra'){       applyDeltas({sus:-10, mc:-10, priv:15});}
+    thresholdChecks(alerts);
+    postChoice(alerts, event4);
+  }
+
+  // Event 4 – Youth Organisation Activities
+  function event4(){
+    eventIndex = 4; updateProgress();
+    const alerts = [];
+    const isBoy = gender==='boy';
+    const body = `
+      <h2>Event 4 – Youth Activities</h2>
+      <div class="date">1934–1935</div>
+      <div class="narrative">
+        ${isBoy ? "Parade drills, compass marches, fireside songs." : "Cooking lessons, first-aid drills, eugenics lectures wrapped as ‘health’."}
+        Tonight there’s a required meeting; across the hall, our Jewish neighbors have been threatened.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'skipHelp', label:"Skip the meeting to help your Jewish neighbors pack and calm their children."},
+        {id:'attend',   label:"Attend quietly, speak little, do your duty."},
+        {id:'lead',     label:`Lead the ${isBoy ? "drill and songs" : "activities"} with enthusiasm.`}
+      ], 'chooseEvent4', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">${genderLine()}</span><span class="small">Obligation weighs differently for each of us.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent4(id){
+    const alerts = [];
+    if(id==='skipHelp'){ applyDeltas({sus:20, mc:15, priv:-15}); }
+    if(id==='attend'){   applyDeltas({sus:5,  mc:-5, priv:0});   }
+    if(id==='lead'){     applyDeltas({sus:-10, mc:-10, priv:15});}
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, event5));
+  }
+
+  // Event 5 – Nuremberg Laws (1935)
+  function event5(){
+    eventIndex = 5; updateProgress();
+    const alerts = [];
+    const body = `
+      <h2>Event 5 – Nuremberg Laws</h2>
+      <div class="date">September 1935</div>
+      <div class="narrative">
+        The laws are posted: who may marry whom, who counts as a person. A ‘loyalty roll’ goes around the classroom.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'refuseWalk', label:"Refuse to sign and walk your Jewish classmates home."},
+        {id:'signQuiet',  label:"Sign quietly; eyes down."},
+        {id:'signLoud',   label:"Sign eagerly and volunteer to read the proclamation aloud."}
+      ], 'chooseEvent5', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">Law</span><span class="small">Ink can wound as surely as fists.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent5(id){
+    const alerts = [];
+    if(id==='refuseWalk'){ applyDeltas({sus:25, mc:15, priv:-20}); }
+    if(id==='signQuiet'){  applyDeltas({sus:5,  mc:-5, priv:0});   }
+    if(id==='signLoud'){   applyDeltas({sus:-10, mc:-10, priv:15});}
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, event6));
+  }
+
+  // Event 6 – Kristallnacht (Nov 1938)
+  function event6(){
+    eventIndex = 6; updateProgress();
+    const alerts = [];
+    const body = `
+      <h2>Event 6 – Kristallnacht</h2>
+      <div class="date">November 1938</div>
+      <div class="narrative">
+        Glass like frost across the sidewalks. Shops smashed. Some cheer; some hide.
+        A party man hands you a sack and a grin.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'returnGoods', label:"Sneak looted goods back to a ransacked family after dark."},
+        {id:'standWatch',  label:"Stand watch and do nothing else."},
+        {id:'lootDeliver', label:"Loot and deliver items to party officials."}
+      ], 'chooseEvent6', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">Pogrom</span><span class="small">Silence can be shelter—or consent.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent6(id){
+    const alerts = [];
+    if(id==='returnGoods'){ applyDeltas({sus:25, mc:15, priv:-20}); }
+    if(id==='standWatch'){  applyDeltas({sus:5,  mc:-5, priv:0});   }
+    if(id==='lootDeliver'){ applyDeltas({sus:-10, mc:-10, priv:15});}
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, event7));
+  }
+
+  // Event 7 – Censorship & Book Burnings (1933 onwards) – forked text
+  function event7(){
+    eventIndex = 7; updateProgress();
+    const alerts = [];
+    const res = (path==='resistance');
+    const header = `Event 7 – Censorship & Book Burnings`;
+    const date = `1933–1939`;
+    const narrative = res
+      ? `A rumor reaches the cellar circle: the library will ‘cleanse’ its shelves tonight.
+         A custodian leaves a side door unlatched.`
+      : `Posters demand a grand ‘cleansing of un-German spirit.’ Youth leaders want a bonfire on the square.
+         Your name is on the roster.`;
+
+    const choices = res ? [
+      {id:'hideMany', label:"Slip inside and hide as many banned books as you can in sacks."},
+      {id:'burnWorth',label:"Attend and throw only worthless scrap to the fire."},
+      {id:'burnAll',  label:"Burn all publicly, shouting slogans so you aren’t suspected."}
+    ] : [
+      {id:'pretendSick', label:"Pretend to be sick and avoid the event."},
+      {id:'leadBurn',    label:"Lead the burning with zeal and speeches."},
+      {id:'oversee',     label:"Oversee attendance but avoid throwing books yourself."}
+    ];
+
+    gameEl.innerHTML = `
+      <h2>${header}</h2>
+      <div class="date">${date}</div>
+      <div class="narrative">${narrative}</div>
+      ${statsView()}
+      ${renderChoices(choices, 'chooseEvent7', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">Books</span><span class="small">Words survive in strange places.</span></div>
+    `;
+  }
+  function chooseEvent7(id){
+    const alerts = [];
+    // Resistance fork options
+    if(id==='hideMany'){ applyDeltas({sus:20, mc:15, priv:-15}); }
+    if(id==='burnWorth'){applyDeltas({sus:5,  mc:5,  priv:0});   }
+    if(id==='burnAll'){  applyDeltas({sus:-10, mc:-10, priv:15});}
+    // Collaboration fork options
+    if(id==='pretendSick'){ applyDeltas({sus:10, mc:5,  priv:-10});}
+    if(id==='leadBurn'){    applyDeltas({sus:-15, mc:-10, priv:20});}
+    if(id==='oversee'){     applyDeltas({sus:0,  mc:-5,  priv:0});  }
+
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, event8));
+  }
+
+  // Event 8 – Edelweiss Pirates & Youth Resistance (1942–43)
+  function event8(){
+    eventIndex = 8; updateProgress();
+    const alerts = [];
+    const body = `
+      <h2>Event 8 – Edelweiss Pirates</h2>
+      <div class="date">1942–1943</div>
+      <div class="narrative">
+        In the parks, a few youths wear forbidden hair and songs. They pass notes, mark walls, guide the lost.
+        A contact asks if you’ll help after dark.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'help',   label:"Help them spread leaflets and guide a family to a safe flat for the night."},
+        {id:'decline',label:"Decline politely. You saw nothing."},
+        {id:'report', label:"Report them to your youth leader and the police."}
+      ], 'chooseEvent8', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">Whispers</span><span class="small">Songs can be knives—or bandages.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent8(id){
+    const alerts = [];
+    if(id==='help'){    applyDeltas({sus:30, mc:15, priv:-25}); }
+    if(id==='decline'){ applyDeltas({sus:0,  mc:0,  priv:0});   }
+    if(id==='report'){  applyDeltas({sus:-20, mc:-15, priv:25});}
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, event9));
+  }
+
+  // Event 9 – The Fork Echoes
+  // If resistance path: chance to save a cache of banned books in an air-raid shelter.
+  // If collaboration path: lead a public denunciation event.
+  function event9(){
+    eventIndex = 9; updateProgress();
+    const alerts = [];
+    const res = (path==='resistance');
+    const body = `
+      <h2>Event 9 – ${res ? "Shelter & Pages" : "Denunciation Rally"}</h2>
+      <div class="date">1943</div>
+      <div class="narrative">
+        ${res
+          ? "Sirens howl. In the cellar shelter, you glimpse paper-wrapped bundles: the hidden books. A warden eyes you."
+          : "The square fills for a ‘morale evening.’ You’re handed a list of ‘degenerate authors’ to denounce from the stage."}
+      </div>
+      ${statsView()}
+      ${renderChoices(res ? [
+        {id:'saveCache', label:"Smuggle the bundles under coats to a safer cellar before the all-clear."},
+        {id:'leave',     label:"Leave them. Survival first."},
+        {id:'hideOne',   label:"Hide only a single volume in your clothing."}
+      ] : [
+        {id:'soften', label:"Read the list flatly, cut the worst lines, and end early."},
+        {id:'refuse', label:"Refuse to read. Hand back the paper in front of everyone."},
+        {id:'perform',label:"Denounce loudly; call for renewed zeal and informers."}
+      ], 'chooseEvent9', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">${res ? "Shelter" : "Stage"}</span><span class="small">${res ? "What we save is what survives us." : "Words can be weapons."}</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent9(id){
+    const alerts = [];
+    // Resistance branch
+    if(id==='saveCache'){ applyDeltas({sus:20, mc:15, priv:-15}); }
+    if(id==='leave'){     applyDeltas({sus:0,  mc:-5, priv:0});   }
+    if(id==='hideOne'){   applyDeltas({sus:10, mc:10, priv:-5});  }
+    // Collaboration branch
+    if(id==='soften'){ applyDeltas({sus:5,  mc:5,  priv:-5});  }
+    if(id==='refuse'){ applyDeltas({sus:20, mc:15, priv:-15}); }
+    if(id==='perform'){applyDeltas({sus:-10, mc:-15, priv:15});}
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, event10));
+  }
+
+  // Event 10 – 1943 Turning Tide (Stalingrad aftermath / Conscription / Raids)
+  function event10(){
+    eventIndex = 10; updateProgress();
+    const alerts = [];
+    const isBoy = gender==='boy';
+    const body = `
+      <h2>Event 10 – Turning Tide</h2>
+      <div class="date">Summer–Autumn 1943</div>
+      <div class="narrative">
+        The radio voice is thinner now. Faces at school are missing. ${isBoy
+          ? "Older boys leave in uniforms; the rest of us drill in rubble."
+          : "We roll bandages, run soup kitchens, and write letters for the wounded."}
+        A recruiter presses a form into my palm.
+      </div>
+      ${statsView()}
+      ${renderChoices([
+        {id:'serveFront', label: isBoy ? "Volunteer for front-line service training." : "Volunteer full-time for war-support drives."},
+        {id:'aidQuiet',   label:"Request assignment to civil aid and keep your head low."},
+        {id:'divert',     label:"Use your post to divert supplies to families in danger."}
+      ], 'chooseEvent10', eventIndex)}
+      ${alertsView(alerts)}
+      <div class="footer"><span class="tag">War</span><span class="small">The end isn’t here, but you can feel its shape.</span></div>
+    `;
+    gameEl.innerHTML = body;
+  }
+  function chooseEvent10(id){
+    const alerts = [];
+    if(id==='serveFront'){ applyDeltas({sus:-10, mc:-10, priv:15}); }
+    if(id==='aidQuiet'){   applyDeltas({sus:5,   mc:0,   priv:0});  }
+    if(id==='divert'){     applyDeltas({sus:20,  mc:15,  priv:-15});}
+    thresholdChecks(alerts);
+    continueOrEnd(()=>postChoice(alerts, ()=>endgame(false)));
+  }
+
+  // =========================
+  // Endgame
+  // =========================
+  function endgame(wasArrested){
+    updateProgress();
+    const alerts = [];
+    let fateTitle = "Aftermath";
+    let epilogue = "";
+
+    if(wasArrested){
+      fateTitle = "Game Over – Arrest";
+      epilogue = `The train shudders through the countryside. Numbers replace names.
+      The world will remember what was done here—and by whom.`;
+    }else{
+      // Determine outcome based on totals and thresholds
+      if(morality>=70 && suspicion<70){
+        epilogue = `You learned to move like rain through wires: quiet, persistent.
+        Families remember a knock at the right hour, a door left unlatched, a sack of books ready to travel.`;
+      }else if(morality>=70 && suspicion>=70){
+        epilogue = `Your courage brought the state to your door more than once.
+        Somehow, you remained free—barely. The city keeps your secrets in its rubble.`;
+      }else if(privilege>=90 && morality<=30){
+        epilogue = `Your face smiled from posters as the tide turned.
+        Privilege shielded you then; later, it weighed like lead. History writes in ink that does not dry.`;
+      }else if(privilege>=70 && morality<50){
+        epilogue = `You rose in rank and ration. You obeyed, and were rewarded.
+        You told yourself it was only survival. The mirror remembers more.`;
+      }else{
+        epilogue = `You drifted between fear and silence. You survived.
+        Survival is not the same as innocence—but it is a beginning.`;
+      }
+    }
+
+    const summary = `
+      <div class="center small muted" style="margin:4px 0 10px">
+        <span class="tag">Final Suspicion: ${suspicion}</span>
+        <span class="tag">Final Morality & Courage: ${morality}</span>
+        <span class="tag">Final Privilege: ${privilege}</span>
+      </div>
+    `;
+
+    gameEl.innerHTML = `
+      <h2>${fateTitle}</h2>
+      <div class="date">Berlin, 1943</div>
+      <div class="narrative">${epilogue}</div>
+      ${statsView()}
+      ${summary}
+      <div class="alerts">
+        <div class="alert info">This simulation portrays life under a dictatorship for historical/educational purposes.</div>
+      </div>
+      <div class="choices">
+        <button class="btn" onclick="startScreen()">Play Again</button>
+      </div>
+      <div class="footer small">
+        <span class="muted">Branching was set at Event 2. Different paths lead to different Event 7 & 9 experiences.</span>
+      </div>
+    `;
+  }
+
+  // =========================
+  // Post-choice helper
+  // =========================
+  function postChoice(alerts, nextFn){
+    // Re-render a minimal “result” card then advance.
+    gameEl.innerHTML = `
+      <h2>…</h2>
+      ${statsView()}
+      ${alertsView(alerts)}
+      <div class="footer small"><span class="muted">Proceeding…</span></div>
+    `;
+    // Small delay for readability
+    setTimeout(nextFn, 350);
+  }
+
+  // Boot
+  startScreen();
+  </script>
+</body>
+</html>
