@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Privilege Walk (SG) — Yes/No Slider Activity</title>
+<style>
+  :root{
+    --bg:#f7f7fb;
+    --card:#ffffff;
+    --ink:#202124;
+    --muted:#5f6368;
+    --accent:#4c8bf5;
+    --good:#34a853;
+    --bad:#ea4335;
+    --ring:#e0e0e0;
+  }
+  * { box-sizing: border-box; }
+  body{
+    margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial, sans-serif;
+    color:var(--ink); background:var(--bg);
+  }
+  header{
+    padding: 20px 14px; background: linear-gradient(180deg, #eef3ff, #f7f7fb);
+    border-bottom:1px solid #e8eaf0;
+  }
+  h1{ margin:6px 0 4px; font-size: clamp(20px, 3.8vw, 30px); }
+  .sub{ color:var(--muted); font-size:0.95rem; }
+  main{ max-width: 1000px; margin: 18px auto; padding: 0 14px 36px; }
+
+  .card{
+    background:var(--card); border:1px solid #ececf1; border-radius:16px; padding:18px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .grid{
+    display:grid; gap:12px;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+  }
+  .q{
+    border:1px solid var(--ring); border-radius:14px; padding:12px 12px 10px; background:#fff;
+  }
+  .q h3{
+    margin:0 0 6px; font-size:0.98rem; line-height:1.3;
+    display:flex; gap:8px; align-items:flex-start;
+  }
+  .tag{
+    font-size:0.72rem; color:#3367d6; background:#eef3ff; padding:2px 8px; border-radius:999px; margin-left:auto;
+    white-space:nowrap; align-self:flex-start; border:1px solid #dbe6ff;
+  }
+  .row{
+    display:flex; align-items:center; gap:10px; margin-top:6px;
+  }
+  .pill{
+    font-size:0.82rem; padding:2px 8px; border-radius:999px; border:1px solid var(--ring); color:var(--muted);
+  }
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none; width:100%; height:26px; background:transparent;
+  }
+  input[type="range"]::-webkit-slider-runnable-track{
+    height:8px; background:linear-gradient(90deg, #f1f3f4, #e8eaed); border-radius:999px;
+    border:1px solid #e0e0e0;
+  }
+  input[type="range"]::-moz-range-track{
+    height:8px; background:linear-gradient(90deg, #f1f3f4, #e8eaed); border-radius:999px;
+    border:1px solid #e0e0e0;
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:50%;
+    background:#fff; border:1px solid #cfd3d8; box-shadow:0 1px 2px rgba(0,0,0,0.08);
+    margin-top:-8px;
+  }
+  input[type="range"]::-moz-range-thumb{
+    width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid #cfd3d8;
+  }
+
+  .controls{
+    margin-top:16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  }
+  button{
+    border:1px solid #d7dbe2; background:#fff; color:#1f2937; padding:10px 14px; border-radius:12px;
+    cursor:pointer; font-weight:600;
+  }
+  button.primary{
+    background:var(--accent); color:#fff; border-color: #3a71e5;
+  }
+  button:hover{ filter:brightness(0.98); }
+
+  .result{
+    margin-top:18px; display:grid; gap:10px;
+  }
+  .bar{
+    width:100%; background:#eceff3; border:1px solid #dfe3ea; border-radius:14px; height:20px; overflow:hidden;
+  }
+  .fill{
+    height:100%; width:0%; background:linear-gradient(90deg, #7bb0ff, #4c8bf5);
+    transition: width 300ms ease;
+  }
+  .scoreline{
+    display:flex; justify-content:space-between; font-weight:600;
+  }
+  .legend{ color:var(--muted); font-size:0.92rem; }
+  .tiny{ font-size:0.8rem; color:var(--muted); }
+
+  details{ margin-top:8px; }
+  summary{ cursor:pointer; user-select:none; color:#2563eb; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧭 Privilege Walk (Singapore) — Yes/No Sliders</h1>
+  <div class="sub">Move each slider to <strong>Yes</strong> ✅ or <strong>No</strong> ❌, then click <strong>Calculate</strong>. Privileged answers add points; disadvantaged answers subtract points.</div>
+</header>
+
+<main>
+  <section class="card" id="questionsCard">
+    <div class="grid" id="questionGrid"></div>
+
+    <div class="controls">
+      <button class="primary" id="calcBtn">Calculate</button>
+      <button id="resetBtn" title="Reset all sliders to No">Reset</button>
+      <span class="tiny">Tip: This is a reflective activity, not a grade. Please be respectful. 💛</span>
+    </div>
+
+    <div class="result" id="resultArea" hidden>
+      <div class="scoreline">
+        <div id="scoreText">Your Privilege Score: 0</div>
+        <div id="percentText">0%</div>
+      </div>
+      <div class="bar" aria-label="Privilege bar">
+        <div class="fill" id="barFill" style="width:0%"></div>
+      </div>
+      <div class="legend">Lower scores suggest fewer structural advantages; higher scores suggest more. Use this to spark discussion, not judgement.</div>
+      <details>
+        <summary>How scoring works</summary>
+        <div class="tiny">
+          Each question is mapped so that a privileged answer scores <strong>+1</strong> and a less privileged answer scores <strong>−1</strong>. We normalise the total to a 0–100 bar.
+        </div>
+      </details>
+    </div>
+  </section>
+</main>
+
+<script>
+/*
+  Each question has:
+  - id: unique key
+  - text: the prompt (with emojis)
+  - category: for a small tag
+  - privilegedWhenYes: boolean — if true, "Yes" ⇒ +1; "No" ⇒ −1. If false, "Yes" ⇒ −1; "No" ⇒ +1.
+*/
+const QUESTIONS = [
+  // EDUCATION 🎓
+  {id:'q1',  category:'🎓 Education', privilegedWhenYes:false, text:'Have you ever worked part-time from ages 13–16?'},
+  {id:'q2',  category:'🎓 Education', privilegedWhenYes:false, text:'Have you ever been awarded MOE FAS / a bursary for needy students?'},
+  {id:'q3',  category:'🎓 Education', privilegedWhenYes:true,  text:'During primary/secondary school, did you have more than two tutors at any point?'},
+  {id:'q19', category:'🎓 Education', privilegedWhenYes:true,  text:'Is English your first language? 🗣️'},
+  // FAMILIAL 👨‍👩‍👧
+  {id:'q16', category:'👨‍👩‍👧 Familial', privilegedWhenYes:false, text:'Do you live in a single-parent family?'},
+  {id:'q24', category:'👨‍👩‍👧 Familial', privilegedWhenYes:true,  text:'Have you or your siblings been placed in paid childcare? 🧒'},
+  {id:'q17', category:'👨‍👩‍👧 Familial', privilegedWhenYes:false, text:'Have your parent(s) ever had to work two or more jobs to support the family?'},
+  {id:'q18', category:'👨‍👩‍👧 Familial', privilegedWhenYes:false, text:'Have you/your family ever needed to worry about the next meal? 🍚'},
+  // FINANCIAL 💰
+  {id:'q14', category:'💰 Financial', privilegedWhenYes:true,  text:'Has your family ever employed a domestic helper? 🧹'},
+  {id:'q15', category:'💰 Financial', privilegedWhenYes:true,  text:'Does your family own a car? 🚗'},
+  {id:'q8',  category:'💰 Financial', privilegedWhenYes:false, text:'Do you/your family hold a Blue CHAS card?'},
+  {id:'q6',  category:'💰 Financial', privilegedWhenYes:false, text:'Have you been a recipient of The Straits Times Pocket Money Fund or a similar charity?'},
+  {id:'q12', category:'💰 Financial', privilegedWhenYes:false, text:'Have you ever felt socially obliged to eat at a place beyond your budget with friends? 🍽️'},
+  // EXPERIENCES / MOBILITY 🌏
+  {id:'q9',  category:'🌏 Experiences', privilegedWhenYes:true,  text:'Have you ever gone on a family vacation? 🧳'},
+  {id:'q10', category:'🌏 Experiences', privilegedWhenYes:true,  text:'Have you ever gone on a family vacation outside of Asia? ✈️'},
+  {id:'q14b',category:'🌏 Experiences', privilegedWhenYes:true,  text:'Have you travelled outside of Southeast Asia? 🗺️'},
+  // SOCIAL / REPRESENTATION 🤝
+  {id:'q4',  category:'🤝 Social', privilegedWhenYes:false, text:'Have you ever been the only person of your race/gender/sexual orientation in a class or workplace?'},
+  {id:'q7',  category:'🤝 Social', privilegedWhenYes:false, text:'Have you felt that your racial/gender/sexual orientation group lacks accurate representation in local media? 📺'},
+  // SAFETY 🛡️
+  {id:'q5',  category:'🛡️ Safety', privilegedWhenYes:false, text:'Have you ever felt unsafe walking alone at night? 🌙'},
+  {id:'q21', category:'🛡️ Safety', privilegedWhenYes:false, text:'Have you been a victim of physical violence based on your identity (e.g., gender, race/ethnicity, age, sexual orientation)?'},
+  // CIVIC 🇸🇬
+  {id:'q20', category:'🇸🇬 Civic', privilegedWhenYes:false, text:'Do you have to serve National Service for the full 2 years with NSMen commitments?'}
+];
+
+const grid = document.getElementById('questionGrid');
+
+function makeQuestionRow(q){
+  const wrap = document.createElement('div');
+  wrap.className = 'q';
+
+  const h = document.createElement('h3');
+  h.innerHTML = `<span>${q.text}</span><span class="tag">${q.category}</span>`;
+  wrap.appendChild(h);
+
+  const row = document.createElement('div'); row.className = 'row';
+
+  const noLab = document.createElement('span');
+  noLab.className = 'pill';
+  noLab.textContent = '❌ No';
+  noLab.setAttribute('aria-hidden', 'true');
+
+  const slider = document.createElement('input');
+  slider.type = 'range'; slider.min = '0'; slider.max = '1'; slider.step = '1';
+  slider.value = '0';
+  slider.id = q.id;
+  slider.setAttribute('aria-label', q.text + ' — slider Yes/No');
+
+  const yesLab = document.createElement('span');
+  yesLab.className = 'pill';
+  yesLab.textContent = '✅ Yes';
+  yesLab.setAttribute('aria-hidden', 'true');
+
+  row.append(noLab, slider, yesLab);
+
+  const state = document.createElement('div');
+  state.className = 'tiny';
+  state.id = q.id + '_state';
+  state.textContent = 'Current: ❌ No';
+
+  slider.addEventListener('input', () => {
+    const v = Number(slider.value);
+    state.textContent = 'Current: ' + (v ? '✅ Yes' : '❌ No');
+  });
+
+  wrap.append(row, state);
+  return wrap;
+}
+
+// Render questions
+QUESTIONS.forEach(q => grid.appendChild(makeQuestionRow(q)));
+
+const calcBtn = document.getElementById('calcBtn');
+const resetBtn = document.getElementById('resetBtn');
+const resultArea = document.getElementById('resultArea');
+const barFill = document.getElementById('barFill');
+const scoreText = document.getElementById('scoreText');
+const percentText = document.getElementById('percentText');
+
+function computeScore(){
+  let total = 0;
+  for(const q of QUESTIONS){
+    const v = Number(document.getElementById(q.id).value); // 0 = No, 1 = Yes
+    // Map to ±1 depending on which side is privileged
+    const contrib = v === 1 ? (q.privilegedWhenYes ? +1 : -1) : (q.privilegedWhenYes ? -1 : +1);
+    total += contrib;
+  }
+  const N = QUESTIONS.length;
+  // Normalise from [-N, N] -> [0,100]
+  const percent = Math.round( ((total + N) / (2*N)) * 100 );
+  return { total, max:N, percent };
+}
+
+calcBtn.addEventListener('click', () => {
+  const { total, max, percent } = computeScore();
+  scoreText.textContent = `Your Privilege Score: ${total} (range −${max} to +${max})`;
+  percentText.textContent = `${percent}%`;
+  barFill.style.width = percent + '%';
+  resultArea.hidden = false;
+});
+
+resetBtn.addEventListener('click', () => {
+  document.querySelectorAll('input[type="range"]').forEach(r => r.value = '0');
+  document.querySelectorAll('.tiny[id$="_state"]').forEach(s => s.textContent = 'Current: ❌ No');
+  barFill.style.width = '0%';
+  scoreText.textContent = 'Your Privilege Score: 0';
+  percentText.textContent = '0%';
+  resultArea.hidden = true;
+});
+</script>
+</body>
+</html>
