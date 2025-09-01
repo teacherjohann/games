@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Nanyang Passage — Goh Pek Teck</title>
+
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital,wght@0,400;1,400&family=Spectral:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --sg-red:#EF3340; --sg-dark:#0b0d12; --sg-gold:#C3A54B; --sg-teal:#1A9C9C;
+    --ink:#1b1e23; --muted:#5d626c; --bg:#f7f7f8; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:"Spectral",Georgia,serif;color:var(--ink);background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(239,51,64,.08), transparent 50%),
+      radial-gradient(1200px 600px at 110% -10%, rgba(195,165,75,.08), transparent 50%),
+      var(--bg);}
+  header{background:linear-gradient(135deg,var(--sg-red),#cc0e1c);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+  header h1{margin:0;font-size:1.15rem;font-family:"IM Fell English",serif}
+  header .meta{opacity:.95}
+  main{max-width:980px;margin:24px auto;padding:0 16px 48px;position:relative}
+
+  /* Right-side vertical HUD */
+  .sidehud{
+    position:fixed; right:12px; top:76px; bottom:24px; width:76px;
+    display:flex; flex-direction:column; gap:14px; align-items:center; z-index:40; pointer-events:none;
+  }
+  .vbar{width:20px;height:170px;background:#eef0f4;border:1px solid #e1e4ea;border-radius:10px;position:relative;overflow:hidden}
+  .vfill{position:absolute;left:0;right:0;bottom:0;height:0%;transition:height .3s ease}
+  .vfill.wealth{background:linear-gradient(180deg,var(--sg-red),#ff6a72)}
+  .vfill.fatigue{background:linear-gradient(180deg,#1f2843,#344053)}
+  .vfill.bro{background:linear-gradient(180deg,#1A9C9C,#41c3c3)}
+  .vfill.susp{background:linear-gradient(180deg,#7b3f00,#c46c00)}
+  .vlabel{font-size:.8rem;color:#444;text-align:center;line-height:1}
+  .sidehud .group{display:flex;flex-direction:column;gap:6px;align-items:center}
+  @media(max-width:960px){ .sidehud{display:none} }
+
+  .card{background:var(--card);border:1px solid #e9eaee;border-radius:16px;box-shadow:0 10px 30px rgba(21,25,37,.06);overflow:hidden}
+  .media{width:100%;aspect-ratio:21/9;background:#f2f3f6;display:grid;place-items:center;border-bottom:1px solid #eceff3}
+  .media img{width:100%;height:100%;object-fit:cover}
+  .fallback-emoji{font-size:60px;opacity:.7}
+  figure{margin:0;position:relative;width:100%;height:100%}
+  figcaption{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,0));color:#fff;padding:10px 14px;font-size:.9rem;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+
+  .scene{padding:22px}
+  .scene h2{margin:0 0 6px;font-size:1.35rem;color:var(--sg-red);font-family:"IM Fell English",serif}
+  .scene .subtitle{color:var(--muted);font-size:.95rem;margin-bottom:12px}
+  .scene p{line-height:1.6;margin:10px 0;font-size:1.03rem}
+
+  .choices{display:grid;gap:10px;grid-template-columns:1fr;padding:0 22px 22px}
+  .option{
+    display:flex;gap:12px;align-items:flex-start;border:2px solid var(--sg-red);border-radius:12px;padding:12px 14px;
+    background:#fff;color:var(--ink);text-align:left;cursor:pointer;transition:.15s transform ease, .15s background ease, .15s border-color ease; outline:none;
+  }
+  .option:hover{transform: translateY(-1px); background:#fff5f6}
+  .option.disabled{opacity:.55;cursor:not-allowed;filter:grayscale(25%)}
+  .option .note{margin-top:6px;font-size:.9rem;color:#8a0000}
+  .badge{min-width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:18px;color:#fff;flex:0 0 34px;font-weight:700;background:var(--sg-red)}
+  .opt-text{font-size:1rem}
+
+  .footer{padding:14px 22px 22px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:.9rem}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e6e7ec;padding:6px 10px;border-radius:999px}
+
+  .intro,.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.5);z-index:50;padding:20px;visibility:hidden;opacity:0;transition:.2s ease}
+  .intro.show,.modal.show{visibility:visible;opacity:1}
+  .intro-card,.modal-card{max-width:760px;width:100%;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;border:1px solid #eee}
+  .intro-media{aspect-ratio:21/9;background:#f2f3f6;display:grid;place-items:center}
+  .intro-body{padding:18px 20px 20px}
+  .intro-body h2{margin:0 0 8px;color:var(--sg-red);font-family:"IM Fell English",serif}
+  .btn{padding:10px 14px;border-radius:10px;border:1px solid transparent;background:var(--sg-red);color:#fff;cursor:pointer;font-weight:600}
+  .btn.secondary{background:#fff;color:var(--sg-red);border-color:var(--sg-red)}
+  .modal-body{padding:18px 20px 20px}
+  .modal-title{margin:0 0 6px;font-weight:700;font-size:1.05rem}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+</style>
+</head>
+<body>
+<header aria-label="Game identity">
+  <h1>Nanyang Passage — Goh Pek Teck</h1>
+  <div class="meta"><span id="step">Prologue</span></div>
+</header>
+
+<!-- Vertical side HUD (one set only) -->
+<div class="sidehud" aria-hidden="false">
+  <div class="group" aria-label="Wealth"><div class="vbar"><div class="vfill wealth" id="wFill" style="height:20%"></div></div><div class="vlabel">💰</div></div>
+  <div class="group" aria-label="Fatigue"><div class="vbar"><div class="vfill fatigue" id="fFill" style="height:20%"></div></div><div class="vlabel">😓</div></div>
+  <div class="group" aria-label="Brotherhood"><div class="vbar"><div class="vfill bro" id="bFill" style="height:0%"></div></div><div class="vlabel">🤝</div></div>
+  <div class="group" aria-label="Suspicion"><div class="vbar"><div class="vfill susp" id="sFill" style="height:0%"></div></div><div class="vlabel">🕵️</div></div>
+</div>
+
+<main>
+  <!-- Intro / Prologue with portrait -->
+  <div class="intro show" id="intro">
+    <div class="intro-card">
+      <div class="intro-media">
+        <img id="portrait" src="https://teacherjohann.github.io/games/assets/portrait.jpg" alt="Portrait of Goh Pek Teck" onerror="this.style.display='none'">
+      </div>
+      <div class="intro-body">
+        <h2>Prologue — Fujian youth, 1822</h2>
+        <p><strong>Goh Pek Teck</strong>, nimble yet <em>boh lui</em> (no money). Failed harvest, clan tensions, rumours of work in Nanyang (Singapore). Your mother folds your shirt; the sea calls.</p>
+        <button class="btn" id="startBtn">Start Story</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pop-up modal -->
+  <div class="modal" id="modal">
+    <div class="modal-card">
+      <div class="modal-body">
+        <div class="modal-title" id="modalTitle">Notice</div>
+        <div id="modalText" style="margin:6px 0 14px"></div>
+        <div class="modal-actions"><button class="btn" id="modalOk">OK</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game card -->
+  <section class="card" role="region" aria-live="polite" aria-atomic="true" id="gameCard" style="display:none;">
+    <div class="media" aria-hidden="false">
+      <figure>
+        <img id="sceneImg" alt="Illustration of setting" src="">
+        <div id="imgFallback" class="fallback-emoji" style="display:none;">🚣‍♂️</div>
+        <figcaption id="imgCaption">A sampan nudges a muddy bank as dawn thins the mist.</figcaption>
+      </figure>
+    </div>
+
+    <div class="scene">
+      <h2 id="title">Turn 1</h2>
+      <div class="subtitle" id="subtitle">—</div>
+      <p id="text">—</p>
+    </div>
+
+    <div class="choices" id="choices"></div>
+
+    <div class="footer">
+      <div class="pill">Event <strong id="evNum">1</strong>/10</div>
+    </div>
+  </section>
+
+  <div class="center" style="text-align:center;padding:22px;opacity:.8;font-size:.9rem;">
+    Design: accessible contrast · emoji-first UI
+  </div>
+</main>
+
+<script>
+/* ----------------- Images (GitHub Pages paths) ------------------ */
+const IMG = (name) => `https://teacherjohann.github.io/games/assets/${name}.jpg`;
+const images = {
+  prologue:{src:IMG('portrait'),alt:'Portrait of Goh Pek Teck',cap:'Goh Pek Teck leaves Fujian, 1822.'},
+  1:{src:IMG('fujian'),alt:'Fujian fields after a poor harvest',cap:'Fujian fields after a poor harvest; tempers rise.'},
+  2:{src:IMG('sea-passage'),alt:'Crowded junk on the South China Sea',cap:'A crowded junk rides the South China Sea swells.'},
+  3:{src:IMG('boat-quay'),alt:'Boat Quay with sampans and shophouses',cap:'Boat Quay wakes; overseers clap and point.'},
+  4:{src:IMG('kongsi'),alt:'Crowded kongsi house interior',cap:'A clan kongsi (mutual-aid association) offers bowls and shoulders.'},
+  5:{src:IMG('head-tax'),alt:'Silver scale and tallies',cap:'Head tax (per-person colonial tax) and wages bite.'},
+  6:{src:IMG('sinseh'),alt:'Sinseh treating with cups and herbs',cap:'A sinseh offers treatment and an apprenticeship (learn under a master).'},
+  '7A':{src:IMG('wharf-storm'),alt:'Monsoon at the wharf',cap:'Monsoon rush makes every load slippery.'},
+  '7B':{src:IMG('market-guard'),alt:'Market night watch',cap:'“Protection” jobs raise eyes and whispers.'},
+  '7C':{src:IMG('tcm-apprentice'),alt:'TCM shop interior',cap:'Apprentice trial—brew, pulse, cupping.'},
+  '8A':{src:IMG('remittance'),alt:'Letter home and coins',cap:'Remittance (money sent home) or rest?'},
+  '8B':{src:IMG('gamblingden'),alt:'Gambling den scene',cap:'Gambling den (illegal betting house) promises quick silver.'},
+  '8C':{src:IMG('merchant-visit'),alt:'Wealthy merchant at a TCM shop',cap:'A merchant tests your mentor’s skill.'},
+  '9A':{src:IMG('wharf-injury'),alt:'Sack slipping on the quay',cap:'A sack slips—save the load or save your back?'},
+  '9B':{src:IMG('turf'),alt:'Alley tension between groups',cap:'Rival groups—fight or broker a truce (negotiate peace)?'},
+  '9C':{src:IMG('tcm-focus'),alt:'Herb drawers and signboard',cap:'Choose your focus: shop, hybrid, or docks.'},
+  '10A':{src:IMG('foreman'),alt:'Foreman overseeing work',cap:'A foreman role beckons.'},
+  '10B':{src:IMG('police-raid'),alt:'Police sweep at night',cap:'Crackdown on vice and societies.'},
+  '10C':{src:IMG('signboard'),alt:'Carved wooden signboard',cap:'Will your name hang outside the shop?'},
+  arrest:{src:IMG('arrest'),alt:'Police cell',cap:'Arrest under colonial policing.'},
+  death:{src:IMG('death-fatigue'),alt:'Collapsed worker',cap:'Body gives way after relentless strain.'},
+  epA:{src:IMG('epilogue-coolie'),alt:'Modest bunk and silver pouch',cap:'A modest life, honestly earned.'},
+  epB:{src:IMG('epilogue-vice'),alt:'Night alley, lantern light',cap:'Lessons from walking too close to vice.'},
+  epC:{src:IMG('epilogue-tcm'),alt:'Quiet TCM shop front',cap:'A healer’s steady hand in the settlement.'},
+};
+
+function setImageFor(key){
+  const img = document.getElementById('sceneImg');
+  const cap = document.getElementById('imgCaption');
+  const fallback = document.getElementById('imgFallback');
+  const meta = images[key] || images[1];
+  if(!meta || !meta.src){
+    img.removeAttribute('src'); fallback.style.display='grid'; cap.textContent='—'; return;
+  }
+  fallback.style.display='none'; img.style.display='block';
+  img.src = meta.src; img.alt = meta.alt || 'Scene';
+  cap.textContent = meta.cap || '';
+}
+
+/* ----------------- State ------------------ */
+const state = {
+  wealth:2, fatigue:2, brotherhood:0, suspicion:0, turn:1,
+  flags:{usedAgent:false,familyDebt:false,job:null,kongsi:false,society:false,vice:false,tcm:false,tcm_full:false,hybrid:false,foreman:false},
+  oneTime:{fatWarn:false,fatDeath:false,polWarn:false,arrested:false,broGift:false}
+};
+function clamp(v,min=0,max=10){ return Math.max(min, Math.min(max, v)); }
+
+/* ----------------- Modal popup ------------------ */
+function popup(title, text, onclose){
+  const m = document.getElementById('modal');
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalText').textContent = text;
+  m.classList.add('show');
+  const handler = ()=>{ m.classList.remove('show'); ok.removeEventListener('click', handler); if(onclose) onclose(); };
+  const ok = document.getElementById('modalOk');
+  ok.addEventListener('click', handler);
+}
+
+/* ----------------- EVENTS (10 turns, branch from Turn 6) ------------------ */
+const E = {
+  1:{ title:"Fujian, 1822 — Leaving", subtitle:"Clans feud; jars are empty; sea calls",
+      text:"Failed harvest. Debts press like stones. You hear of Nanyang wages. Your mother’s hands shake; the road smells of salt.",
+      choices:[
+        {label:"Hire a coolie agent (pays a middleman for safer passage).", cost:1, delta:{wealth:-1,fatigue:-1}, set:{usedAgent:true}, next:2},
+        {label:"Borrow from kin (family loan you must repay).", delta:{brotherhood:+1}, set:{familyDebt:true}, next:2},
+        {label:"Work one more season to scrape coins, despite clan tensions.", delta:{wealth:+1,fatigue:+1}, next:2},
+      ]},
+  2:{ title:"South China Sea — The Passage", subtitle:"Crowded junk; tar, salt, and stars",
+      text:"The junk creaks. Men sleep shoulder to shoulder. A helmsman knots lines by moonlight.",
+      choices:[
+        {label:"Deck passage (sleep in the open to save coin).", delta:{fatigue:+2}, next:3},
+        {label:"Work for passage (swab decks for fare).", delta:{wealth:+1,fatigue:+3}, next:3},
+        {label:"Claim the agent’s bunk (if you hired one).", require:(s)=>s.flags.usedAgent, cost:1, delta:{wealth:-1,fatigue:+1}, next:3},
+      ],
+      fallback:{label:"No bunk available—stay on deck and endure.", delta:{fatigue:+2}, next:3}},
+  3:{ title:"Boat Quay — First Footfall", subtitle:"Overseers clap; loads thump",
+      text:"Sampans bump the bank. A godown smells of pepper. Carpenters sing to saws.",
+      choices:[
+        {label:"Dock coolie (heavy loading job).", delta:{wealth:+2,fatigue:+2}, set:{job:'dock'}, next:4},
+        {label:"Carpenter’s apprentice (learn a skill through apprenticeship).", delta:{wealth:+1,fatigue:+1}, set:{job:'carpenter'}, next:4},
+        {label:"Pepper godown porter (steady lifts in pepper dust).", delta:{wealth:+1,fatigue:+2}, set:{job:'godown'}, next:4},
+      ]},
+  4:{ title:"Night Lodging — Finding Protection", subtitle:"Bowls, bunks, and loyalties",
+      text:"A clan kongsi (mutual-aid association) offers shared dues and shoulders. A secret society whispers of rites and “protection”.",
+      choices:[
+        {label:"Join the secret society (brotherhood; risk of vice).", delta:{brotherhood:+3,suspicion:+1}, set:{society:true}, next:5},
+        {label:"Join the clan kongsi (shared costs and support).", cost:1, delta:{wealth:-1,brotherhood:+2}, set:{kongsi:true}, next:5},
+        {label:"Remain independent (no entanglements, lonelier road).", delta:{fatigue:+1}, next:5},
+      ]},
+  5:{ title:"Head Tax & Wages", subtitle:"Silver scales and sore backs",
+      text:"The head tax (per-person colonial tax) bites. Some discuss a petition (written request) for fair rates. A friend nudges you toward a gambling den (illegal betting house).",
+      choices:[
+        {label:"Take extra shifts to cover the tax quickly.", delta:{wealth:+2,fatigue:+2}, next:6},
+        {label:"Sign the petition with backing (if you have support).", require:(s)=>s.brotherhood>=2, delta:{wealth:+1,fatigue:+1,brotherhood:+1}, next:6},
+        {label:"Visit the gambling den with a friend.", delta:()=>({wealth:(Math.random()<0.6?+1:-2), suspicion:+2, brotherhood:+1}), set:{vice:true}, next:6},
+      ],
+      fallback:{label:"Keep your head down; you lack backing for a petition.", delta:{wealth:+1,fatigue:+1}, next:6}},
+  /* Turn 6 = Branch selection hub */
+  6:{ title:"A Crossroads — Paths in Nanyang", subtitle:"Middle of the journey",
+      text:"Your back aches. A sinseh offers apprenticeship (learn under a master). Society brothers hint at a steady 'market job'. Or keep lifting at the quay.",
+      choices:[
+        {label:"Keep to coolie work (steady labour).", next:'7A'},
+        {label:"Take society ‘market protection’ work (higher risk of vice).", set:{vice:true,society:true}, next:'7B'},
+        {label:"Accept the sinseh’s apprenticeship (TCM path).", cost:1, delta:{wealth:-1,brotherhood:+1}, set:{tcm:true}, next:'7C'},
+      ]},
+
+  /* Branch A: Coolie */
+  '7A':{title:"Monsoon Rush — Slippery Loads", subtitle:"Storms make heroes and injuries",
+        text:"The quay tilts with rain. Overseers want double pace.",
+        choices:[
+          {label:"Take a double shift (push your body).", delta:{wealth:+2,fatigue:+2}, next:'8A'},
+          {label:"Share workload with brothers (ask for help).", delta:{wealth:+1,fatigue:+1,brotherhood:+1}, next:'8A'},
+          {label:"Turn down extra to protect health.", delta:{fatigue:-1}, next:'8A'},
+        ]},
+  '8A':{title:"Letter from Home — Remittance", subtitle:"How much to send?",
+        text:"Family asks for help. A remittance (money sent home) eases their burden.",
+        choices:[
+          {label:"Send a larger remittance (be generous).", cost:2, delta:{wealth:-2,brotherhood:+1}, next:'9A'},
+          {label:"Work a brutal day to earn more.", delta:{wealth:+2,fatigue:+3}, next:'9A'},
+          {label:"Send modest remittance and rest.", cost:1, delta:{wealth:-1,fatigue:-1}, next:'9A'},
+        ]},
+  '9A':{title:"Wharf Scare — The Slipping Sack", subtitle:"Back or pay?",
+        text:"A sack drops toward the water—instinct decides.",
+        choices:[
+          {label:"Save the load (strain your body).", delta:{wealth:+1,fatigue:+2}, next:'10A'},
+          {label:"Call for help (share the burden).", delta:{fatigue:+1,brotherhood:+1}, next:'10A'},
+          {label:"Step back (lose pay, protect health).", delta:{wealth:-1}, next:'10A'},
+        ]},
+  '10A':{title:"A Step Up?", subtitle:"Overseer’s offer",
+         text:"You’re offered a foreman role. More pay; less popularity.",
+         choices:[
+           {label:"Take the foreman job.", delta:{wealth:+2,fatigue:+1,brotherhood:-1}, set:{foreman:true}, next:'epA'},
+           {label:"Stay a coolie; guard your health.", delta:{fatigue:-1}, next:'epA'},
+           {label:"Shift to carpentry (artisan’s pride).", delta:{wealth:+1}, set:{job:'carpenter'}, next:'epA'},
+         ]},
+
+  /* Branch B: Society / Vice */
+  '7B':{title:"Society Work — Market “Protection”", subtitle:"Eyes watch from shadows",
+        text:"An elder hints at 'protection' fees from stallholders.",
+        choices:[
+          {label:"Stand guard (no roughing up).", delta:{wealth:+2,suspicion:+1,brotherhood:+1}, next:'8B'},
+          {label:"Collect debts the hard way.", delta:{wealth:+3,suspicion:+2,fatigue:+1,brotherhood:+1}, next:'8B'},
+          {label:"Refuse; take dock work instead.", delta:{wealth:+1,fatigue:+1,brotherhood:-1}, next:'8B'},
+        ]},
+  '8B':{title:"Gambling Den — Bigger Game?", subtitle:"Whispers of a raid",
+        text:"A host promises quick wins; someone mentions police.",
+        choices:[
+          {label:"Run the tables (organise the game).", delta:()=>({wealth:(Math.random()<0.6?+3:-2), suspicion:+3, fatigue:+1}), next:'9B'},
+          {label:"Small flutter then leave.", delta:()=>({wealth:(Math.random()<0.5?+1:0), suspicion:+1}), next:'9B'},
+          {label:"Skip and lie low.", delta:{}, next:'9B'},
+        ]},
+  '9B':{title:"Rivalry — Fight or Peace", subtitle:"Tempers run hot",
+        text:"A rival group appears. You could broker a truce (negotiate peace).",
+        choices:[
+          {label:"Join the fight.", delta:{wealth:+1,suspicion:+3,fatigue:+1,brotherhood:+1}, next:'10B'},
+          {label:"Broker a truce (negotiate peace).", delta:{suspicion:-1,brotherhood:+2}, next:'10B'},
+          {label:"Walk away now.", delta:{suspicion:-1,brotherhood:-1}, next:'10B'},
+        ]},
+  '10B':{title:"Crackdown", subtitle:"Police sweep on vice and societies",
+         text:"Informers whisper. Boots echo in lanes.",
+         choices:[
+           {label:"Hide with kongsi network (if you have one).", require:(s)=>s.flags.kongsi||s.brotherhood>=5, delta:{suspicion:-2}, next:'epB'},
+           {label:"Bribe a minor officer.", cost:2, delta:{wealth:-2,suspicion:-1}, next:'epB'},
+           {label:"Keep moving and hope for luck.", delta:{}, next:'epB'},
+         ]},
+
+  /* Branch C: TCM Apprentice */
+  '7C':{title:"TCM Apprentice Trial", subtitle:"Brew, pulse-reading, cupping",
+        text:"Your mentor tests care and patience in the shop.",
+        choices:[
+          {label:"Stay late to memorise formulas.", delta:{fatigue:+1,brotherhood:+1}, next:'8C'},
+          {label:"Tend injured coolies (build trust).", delta:{fatigue:+1,brotherhood:+2}, next:'8C'},
+          {label:"Run shop errands (earn small tips).", delta:{wealth:+1}, next:'8C'},
+        ]},
+  '8C':{title:"Merchant Visit — Trial of Skill", subtitle:"A wealthy man tests the shop",
+        text:"Your mentor needs a steady hand and a clear head.",
+        choices:[
+          {label:"Assist with a difficult case.", delta:{wealth:+1,brotherhood:+1,fatigue:+1}, next:'9C'},
+          {label:"Prepare stock meticulously.", delta:{brotherhood:+1}, next:'9C'},
+          {label:"Offer low-cost remedy to coolies.", delta:{brotherhood:+2}, next:'9C'},
+        ]},
+  '9C':{title:"Choose Your Focus", subtitle:"Where does your heart lie?",
+        text:"Your mentor asks: signboard, side-hustle, or return to docks?",
+        choices:[
+          {label:"Commit fully to the shop (steady healer’s path).", set:{tcm_full:true}, next:'10C'},
+          {label:"Split time with dock work (hybrid).", delta:{wealth:+1,fatigue:+1}, set:{hybrid:true}, next:'10C'},
+          {label:"Return to coolie work.", delta:{wealth:+1,fatigue:+1}, set:{tcm:false}, next:'10A'},
+        ]},
+  '10C':{title:"Passing the Signboard", subtitle:"A name to hang outside",
+         text:"The carving knife pauses—will your name be there?",
+         choices:[
+           {label:"Commit to the shop with your mentor.", delta:{wealth:+1}, next:'epC'},
+           {label:"Open a small street stall.", delta:{wealth:+2,fatigue:+1}, next:'epC'},
+           {label:"Be a healer among coolies (community first).", delta:{brotherhood:+2}, next:'epC'},
+         ]},
+};
+
+/* ----------------- Rendering & Flow ------------------ */
+const $ = (id)=>document.getElementById(id);
+const titleEl=$('title'), subtitleEl=$('subtitle'), textEl=$('text'), choicesEl=$('choices'), stepEl=$('step'), evNumEl=$('evNum');
+
+function applyDelta(delta){
+  const d=(typeof delta==='function')?delta(): (delta||{});
+  state.wealth = clamp(state.wealth + (d.wealth||0));
+  state.fatigue = clamp(state.fatigue + (d.fatigue||0));
+  state.brotherhood = clamp(state.brotherhood + (d.brotherhood||0));
+  state.suspicion = clamp(state.suspicion + (d.suspicion||0));
+  setBars();
+}
+function setFlags(set){ if(!set) return; for(const[k,v] of Object.entries(set)) state.flags[k]=v; }
+
+function setBars(){
+  $('wFill').style.height = (state.wealth*10) + '%';
+  $('fFill').style.height = (state.fatigue*10) + '%';
+  $('bFill').style.height = (state.brotherhood*10) + '%';
+  $('sFill').style.height = (state.suspicion*10) + '%';
+}
+
+function currentKey(turn){
+  if(turn<=5) return String(turn);
+  if(turn===6) return '6';
+  if(state.flags.tcm) return `${turn}C`;
+  if(state.flags.vice || state.flags.society) return `${turn}B`;
+  return `${turn}A`;
+}
+
+function renderEventByTurn(turn){
+  const key = currentKey(turn);
+  const ev = E[key];
+  state.turn = turn;
+  stepEl.textContent = `Event ${turn}`; evNumEl.textContent = turn;
+  titleEl.textContent = ev.title; subtitleEl.textContent = ev.subtitle || ''; textEl.textContent = ev.text;
+  setImageFor(key);
+  choicesEl.innerHTML='';
+
+  let idx=0, gatedOut=false;
+  (ev.choices||[]).forEach(c=>{
+    if(c.require && !c.require(state)){ gatedOut=true; return; }
+    const btn=document.createElement('button');
+    btn.className='option';
+    const costNote = c.cost ? `<div class="note" style="display:none">Cost ${c.cost}💰</div>` : '';
+    btn.innerHTML = `<span class="badge">${['1️⃣','2️⃣','3️⃣','4️⃣'][idx]}</span><div class="opt-text">${c.label}${costNote}</div>`;
+    const cost=c.cost||0;
+    if(cost && state.wealth < cost){
+      btn.classList.add('disabled');
+      const note = btn.querySelector('.note'); if(note) note.style.display='block';
+      btn.addEventListener('click',()=>popup("Not enough silver 💰","You can't afford this choice right now."));
+    }else{
+      btn.addEventListener('click',()=>handleChoice(c));
+    }
+    choicesEl.appendChild(btn); idx++;
+  });
+
+  if(gatedOut && ev.fallback){
+    const fb = ev.fallback;
+    const btn=document.createElement('button');
+    btn.className='option';
+    btn.innerHTML = `<span class="badge">${['1️⃣','2️⃣','3️⃣','4️⃣'][idx]}</span><div class="opt-text">${fb.label}</div>`;
+    btn.addEventListener('click',()=>handleChoice(fb));
+    choicesEl.appendChild(btn);
+  }
+  setBars();
+  checkThresholds(); // in case thresholds reached on entering this scene
+}
+
+/* Threshold popups & endings */
+function checkThresholds(){
+  const t=state.turn;
+  if(!state.oneTime.broGift && state.brotherhood>=7){
+    state.oneTime.broGift=true; state.wealth = clamp(state.wealth+2); setBars();
+    popup("Brotherhood Windfall 🤝","Brothers chip in with extra jobs and gifts. You gain some silver (+2 💰).");
+  }
+  if(!state.oneTime.fatWarn && state.fatigue>=7 && t>=6){
+    state.oneTime.fatWarn=true;
+    popup("Sweat & Blurry Vision 😓","Your sweat stings; vision blurs. Slow down—your body is warning you.");
+  }
+  if(!state.oneTime.polWarn && state.suspicion>=6 && t>=7){
+    state.oneTime.polWarn=true;
+    popup("Police Are Looking Into You 🕵️","Word travels. The police have taken notice of your activities. Keep a low profile.");
+  }
+  if(!state.oneTime.fatDeath && state.fatigue>=10 && t>=8){
+    state.oneTime.fatDeath=true; renderEnding('death'); return;
+  }
+  if(!state.oneTime.arrested && state.suspicion>=9 && t>=8){
+    state.oneTime.arrested=true; renderEnding('arrest'); return;
+  }
+}
+
+function handleChoice(choice){
+  applyDelta(choice.delta);
+  setFlags(choice.set);
+  const nxt = choice.next;
+
+  if(nxt==='epA' || nxt==='epB' || nxt==='epC'){ renderEpilogue(nxt); return; }
+
+  let nt;
+  if(typeof nxt==='number') nt=nxt;
+  else if(typeof nxt==='string') nt=parseInt(nxt.replace(/[^\d]/g,''),10);
+  renderEventByTurn(nt);
+}
+
+/* Endings */
+function renderEnding(kind){
+  const map = {
+    arrest: { title:"Arrest — Game Over", subtitle:"Colonial policing closes in", key:'arrest',
+      text:"Sirens fade; the cell is cold. Your steps have drawn too much attention. The ledger closes here." },
+    death: { title:"Exhaustion — Game Over", subtitle:"Body gives way", key:'death',
+      text:"Sweat turns to darkness. After years of siong (tough) labour, your body can carry no more." }
+  };
+  const m = map[kind];
+  document.getElementById('title').textContent = m.title;
+  document.getElementById('subtitle').textContent = m.subtitle;
+  document.getElementById('text').textContent = m.text;
+  setImageFor(m.key);
+  choicesEl.innerHTML='';
+  const btn=document.createElement('button');
+  btn.className='btn'; btn.textContent='Restart — Back to Prologue';
+  btn.addEventListener('click', resetGame);
+  choicesEl.appendChild(btn);
+  stepEl.textContent = "The End"; evNumEl.textContent = "—";
+}
+
+/* Epilogues */
+function renderEpilogue(code){
+  const {wealth:w, fatigue:f, brotherhood:b, flags} = state;
+  let lines=[];
+  if(code==='epA'){
+    setImageFor('epA');
+    let title="Epilogue — A Modest Life, Honestly Earned";
+    if(flags.foreman) title="Epilogue — Foreman of the Wharf";
+    document.getElementById('title').textContent = title;
+    document.getElementById('subtitle').textContent = "Change and continuity under British rule; labour, law, and community";
+    lines.push("Years pass in heat and rain. You measure days by tides and sacks.");
+    if(flags.job==='carpenter'){ lines.push("You learn the grain of timber; craft steadies your coin."); }
+    else { lines.push("Boat Quay’s cries live in your bones; orders shape your hours."); }
+    if(flags.foreman){ lines.push("You manage crews and tallies; some mutter, some respect."); }
+    if(w>=6 && f>=6) lines.push("A small pouch of silver, an older back—stability, not comfort.");
+    else if(w>=4 && b>=4) lines.push("With friends and careful saving, you share a better bunk and send home remittances (money sent home).");
+    else if(w<3) lines.push("Often boh lui (no money), you share rice and stories to tide through.");
+  }
+  if(code==='epB'){
+    if(state.oneTime.arrested){ renderEnding('arrest'); return; }
+    setImageFor('epB');
+    document.getElementById('title').textContent = "Epilogue — Walking the Line";
+    document.getElementById('subtitle').textContent = "Societies, vice, and the long arm of the law";
+    lines.push("You slip through a crackdown and keep your head low.");
+    if(flags.kongsi) lines.push("Kongsi doors and whispers shielded you when it mattered.");
+    if(w<=2) lines.push("The bribe lightened your pouch; the lesson was costly.");
+  }
+  if(code==='epC'){
+    setImageFor('epC');
+    document.getElementById('title').textContent = "Epilogue — A Healer in the Settlement";
+    document.getElementById('subtitle').textContent = "Cups, herbs, and quiet gratitude";
+    if(flags.tcm_full) lines.push("Your name hangs on a signboard; patients wait before dawn.");
+    else if(flags.hybrid) lines.push("By day you lift; by dusk you brew. Two paths make one livelihood.");
+    else lines.push("Between quay and clinic, you become the worker people look for when backs ache.");
+  }
+
+  document.getElementById('text').textContent = lines.join(' ');
+  choicesEl.innerHTML='';
+  const btn=document.createElement('button');
+  btn.className='btn'; btn.textContent='Restart — Back to Prologue';
+  btn.addEventListener('click', resetGame);
+  choicesEl.appendChild(btn);
+
+  stepEl.textContent = "Epilogue"; evNumEl.textContent = "—";
+}
+
+/* Boot & Reset */
+function startGame(){
+  document.getElementById('intro').classList.remove('show');
+  document.getElementById('gameCard').style.display='block';
+  setImageFor(1);
+  renderEventByTurn(1);
+  setBars();
+  checkThresholds();
+}
+function resetGame(){
+  state.wealth=2; state.fatigue=2; state.brotherhood=0; state.suspicion=0; state.turn=1;
+  state.flags={usedAgent:false,familyDebt:false,job:null,kongsi:false,society:false,vice:false,tcm:false,tcm_full:false,hybrid:false,foreman:false};
+  state.oneTime={fatWarn:false,fatDeath:false,polWarn:false,arrested:false,broGift:false};
+  setBars();
+  document.getElementById('gameCard').style.display='none';
+  document.getElementById('intro').classList.add('show');
+  setImageFor('prologue');
+}
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('modalOk').addEventListener('click', ()=>{});
+setImageFor('prologue'); // show portrait in intro (in case needed)
+</script>
+</body>
+</html>
