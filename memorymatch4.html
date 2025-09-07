@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Memory Match — Question ↔ Answer (Mr Lim)</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#efe9dd; --ink:#2b2b2b; --muted:#6b5f4d;
+    --edge:#d6c7a6; --edge2:#c8b898; --brand:#7b3f00;
+    --green:#16a34a; --red:#dc2626; --line:#e5d9c2; --gold:#d97706;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:linear-gradient(180deg,#f4eee3, #e9dfcf 50%, #e7dcc8);
+    color:var(--ink); font-family: "IM Fell English", Georgia, serif;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; color:#fff;
+    background:linear-gradient(90deg,#7b3f00,#9b5a1a);
+    border-bottom:2px solid #5f2f00; gap:10px;
+  }
+  .titlewrap{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+  header h1{margin:0; font-size:1.25rem; letter-spacing:.2px}
+  .byline{font-style:italic; font-size:.95rem; opacity:.9}
+  .top-meta{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  .pill{
+    display:inline-flex; gap:8px; align-items:center;
+    border:1px solid rgba(255,255,255,.55); background:rgba(255,255,255,.15);
+    padding:6px 10px; border-radius:999px; color:#fff
+  }
+  .btn{
+    border:1px solid #63401a; background:#fff7ed; color:#5a3a16;
+    border-radius:10px; padding:8px 12px; font-weight:700; cursor:pointer;
+    box-shadow:0 2px 0 #caa874;
+  }
+  .btn:hover{background:#fffbf5}
+
+  main{max-width:1200px; margin:14px auto; padding:0 14px}
+  .layout{display:grid; grid-template-columns:280px 1fr; gap:14px;}
+
+  /* Sidebar */
+  .sidebar{
+    background:#fffdf7; border:1px solid var(--line); border-radius:16px; padding:12px;
+    box-shadow:0 8px 24px rgba(15,23,42,.06);
+    display:flex; flex-direction:column; gap:12px; height:fit-content;
+  }
+  .scorebox{
+    border:1px solid var(--line); background:#fff; border-radius:12px; padding:10px 12px;
+  }
+  .scorebox h3{margin:0 0 6px 0; font-size:1rem; color:#7b4a06}
+  .scorebox.active{outline:2px solid #b45309}
+  .legend{
+    border:1px dashed #d4c4a4; background:#fffef9; border-radius:12px; padding:10px 12px;
+    font-weight:700; color:#5e4c2b
+  }
+  .legend small{display:block; color:var(--muted); font-weight:400; margin-top:4px}
+
+  /* Board */
+  .boardWrap{
+    background:#fffdf7; border:1px solid var(--line); border-radius:16px; padding:12px;
+    box-shadow:0 8px 24px rgba(15,23,42,.06);
+  }
+  .grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+    border:1px solid var(--line); background:#f5ecdb; padding:12px; border-radius:16px;
+    box-shadow:0 10px 30px rgba(91,62,22,.15), inset 0 0 50px rgba(120,88,43,.07);
+  }
+  .grid.winPulse{animation:winpulse 1200ms ease-in-out 2}
+  @keyframes winpulse{0%{transform:scale(1)}50%{transform:scale(1.02)}100%{transform:scale(1)}}
+
+  /* Cards */
+  .card{
+    position:relative; height:134px; /* ~10% shorter */
+    perspective:1000px;
+  }
+  .inner{
+    position:absolute; inset:0; transition:transform .5s; transform-style:preserve-3d; cursor:pointer; will-change:transform;
+  }
+  .flipped .inner{ transform: rotateY(180deg); cursor:default;}
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden; border-radius:14px; border:1px solid var(--edge2);
+    box-shadow:inset 0 0 0 1px rgba(130,96,44,.2), inset 0 0 40px rgba(130,96,44,.15), 0 8px 18px rgba(0,0,0,.08);
+    transform: translateZ(0);
+  }
+  .front{
+    background:linear-gradient(180deg, #f2e7cf, #eadbbc 55%, #e6d3ac);
+    transform: rotateY(180deg); display:flex; align-items:center; justify-content:center; padding:10px;
+  }
+  .front .text{font-size:1.02rem; line-height:1.35; color:#3b2f1f; text-align:center; max-width:95%;}
+  .back{
+    background:linear-gradient(180deg, #e6d3ac, #e1c79a 60%, #d7be96);
+    display:flex; align-items:center; justify-content:center; font-size:2rem; color:#4d3519;
+  }
+  .matched .front{box-shadow: inset 0 0 0 2px rgba(22,163,74,.35), 0 8px 20px rgba(22,163,74,.18);}
+  .muted{color:var(--muted)}
+
+  /* Toast */
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;display:none;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.15);font-weight:800}
+  .toast.show{display:block;animation:fade 1.8s ease forwards}
+  .toast.ok{color:#065f46;background:#ecfdf5;border-color:#a7f3d0}
+  .toast.err{color:#7f1d1d;background:#fef2f2;border-color:#fecaca}
+  @keyframes fade{0%{opacity:0;transform:translate(-50%,6px)}10%{opacity:1;transform:translate(-50%,0)}80%{opacity:1}100%{opacity:0}}
+
+  /* Win Modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:14px;z-index:70}
+  .box{max-width:540px;width:100%;background:#fff;border-radius:16px;border:1px solid var(--line);padding:16px;text-align:center}
+  .box h3{margin:0 0 10px 0}
+  .box p{margin:8px 0 12px 0}
+  .box .btn{margin:0 6px}
+
+  /* Confetti + Flash */
+  #confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:75}
+  .confetti-piece{position:absolute;width:10px;height:14px;opacity:.9;will-change:transform,opacity;border-radius:2px;animation:fall 1800ms linear forwards, spin 800ms ease-in-out infinite}
+  @keyframes fall{0%{transform:translate(var(--x,0),-10vh) rotate(0)}100%{transform:translate(calc(var(--x,0) + var(--dx,0)),110vh) rotate(360deg);opacity:.95}}
+  @keyframes spin{0%{transform:rotate(0)}50%{transform:rotate(180deg)}100%{transform:rotate(360deg)}}
+  .flash{position:fixed;inset:0;background:#fff;opacity:0;z-index:72;pointer-events:none;animation:flash 700ms ease}
+  @keyframes flash{0%{opacity:.0}20%{opacity:.6}100%{opacity:0}}
+
+  @media (max-width: 900px){
+    .layout{grid-template-columns:1fr;}
+    .sidebar{order:-1}
+    .card{height:122px} /* also shorter on small screens */
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="titlewrap">
+    <h1>Memory Match — Secondary 1 History Chapter 1 </h1>
+    <span class="byline">Designed by Mr Johann Lim</span>
+  </div>
+  <div class="top-meta">
+    <span class="pill">Turns: <b id="turns">0</b></span>
+    <span class="pill">Pairs found: <b id="found">0</b>/6</span>
+    <button id="reload" class="btn">🔁 Replay</button>
+  </div>
+</header>
+
+<main>
+  <div class="layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div id="p1" class="scorebox active">
+        <h3>Player 1</h3>
+        <div>Score: <b id="s1">0</b></div>
+      </div>
+      <div id="p2" class="scorebox">
+        <h3>Player 2</h3>
+        <div>Score: <b id="s2">0</b></div>
+      </div>
+      <div class="legend">
+        Icons:
+        <div>🌊 — <b>Questions</b></div>
+        <div>⚓ — <b>Answers</b></div>
+        <small>Flip any two. 
+	<div>If they are a matching Q ↔ A pair, they are correct and will stay face-up.</small>
+      </div>
+    </aside>
+
+    <!-- BOARD -->
+    <section class="boardWrap">
+      <section id="board" class="grid" aria-live="polite"></section>
+      <div id="end" class="muted" style="display:none; margin-top:10px;"></div>
+    </section>
+  </div>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Win Modal -->
+<div id="winModal" class="modal">
+  <div class="box">
+    <h3>🎉 Game Cleared!</h3>
+    <p id="winText">Finished in X turns.</p>
+    <div>
+      <button id="playAgain" class="btn">🔁 Play Again</button>
+      <button id="closeWin" class="btn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confetti host -->
+<div id="confetti" aria-hidden="true"></div>
+
+<script>
+/* ----------------------- DATASET ----------------------- */
+const PAIRS = [
+ {id:'p1',q:"Why did the maritime route gain popularity over the land route?",a:"Land-based travel was fraught with danger such as bandits and took longer than the maritime route."},
+ {id:'p2',q:"Why did Temasek decline in the 15th Century?",a:"As China’s vassal state, Malacca received China's protection. This allowed Malacca to dominate trade in Asia, depriving Temasek of trade."},
+ {id:'p3',q:"List the main reasons Temasek declined as a trading port in the 15th Century",a:"- Climate Changes in China \n- Attacks by external powers\n- Melaka's rise"},
+ {id:'p4',q:"List the main reasons the Temasek succeeded in dominating trade in the 13th and 14th Century.",a:"- Monsoon Winds,\n- convenient location to Trade & resupply Food,\n- Fall of Srivijaya Empire"},
+ {id:'p5',q:"List the main countries whose attacks caused Temasek to decline as a trading port in the 15th Century.",a:"Malacca, Majapahit Kingdom, Ayutthaya Kingdom"},
+ {id:'p6',q:"What are some items Chinese traders brought to Temasek?",a:"Porcelain, Silk & Tea"}
+];
+const DISTRACT = [
+ {id:'d1',a:"Srivjiaya Kingdom, China, India."},
+ {id:'d2',a:"Iron, Glass & Spices"},
+ {id:'d3',a:"Temasek rose because of its convenient location on the Sunda Straits."},
+ {id:'d4',a:"The arrival of the Dutch caused Temasek to suffer attacks."}
+];
+
+// Emojis for backs
+const Q_ICON = "🌊";
+const A_ICON = "⚓";
+
+/* ----------------------- STATE ----------------------- */
+let deck=[],flipped=[],turns=0,found=0,player=1,score={1:0,2:0},lock=false;
+
+/* ----------------------- HELPERS ---------------------- */
+const $ = (q)=>document.querySelector(q);
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function toast(msg,ok=true){const t=$("#toast");t.className="toast "+(ok?"ok":"err")+" show";t.textContent=msg;setTimeout(()=>t.className="toast",1800);}
+
+/* Web Audio tiny synth (no files) */
+let _ctx;
+function audioCtx(){ if(!_ctx) _ctx = new (window.AudioContext||window.webkitAudioContext)(); return _ctx; }
+function playDing(){
+  const ctx=audioCtx(),t=ctx.currentTime;
+  const o1=ctx.createOscillator(),g1=ctx.createGain();o1.type='sine';o1.frequency.value=880;g1.gain.value=.06;o1.connect(g1);g1.connect(ctx.destination);o1.start(t);o1.stop(t+.12);
+  const o2=ctx.createOscillator(),g2=ctx.createGain();o2.type='sine';o2.frequency.value=1175;g2.gain.value=.05;o2.connect(g2);g2.connect(ctx.destination);o2.start(t+.1);o2.stop(t+.22);
+}
+function playBuzz(){
+  const ctx=audioCtx(),t=ctx.currentTime;
+  const o=ctx.createOscillator(),g=ctx.createGain();o.type='square';o.frequency.value=120;g.gain.value=.08;o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+.25);
+}
+
+/* Confetti + flash */
+function celebrateWin(){
+  document.querySelector('.grid')?.classList.add('winPulse');
+  setTimeout(()=>document.querySelector('.grid')?.classList.remove('winPulse'), 2400);
+  const f=document.createElement('div');f.className='flash';document.body.appendChild(f);setTimeout(()=>f.remove(),800);
+  const host=$("#confetti");
+  const colors=['#f87171','#34d399','#60a5fa','#fbbf24','#c084fc','#fb7185','#22d3ee'];
+  for(let i=0;i<120;i++){
+    const p=document.createElement('div');p.className='confetti-piece';
+    const x=(Math.random()*100).toFixed(2)+'vw';
+    const dx=((Math.random()*40-20)).toFixed(1)+'vw';
+    p.style.setProperty('--x',x); p.style.setProperty('--dx',dx);
+    p.style.background=colors[i%colors.length]; host.appendChild(p);
+  }
+  setTimeout(()=>{ host.innerHTML=''; },2200);
+}
+
+/* ----------------------- BUILD DECK ----------------------- */
+function buildDeck(){
+  deck=[];flipped=[];turns=0;found=0;player=1;score={1:0,2:0};
+  $("#turns").textContent=0; $("#found").textContent=0;
+  $("#s1").textContent=0; $("#s2").textContent=0;
+  $("#p1").classList.add("active"); $("#p2").classList.remove("active");
+  $("#end").style.display="none";
+
+  // 6 Q/A pairs
+  PAIRS.forEach((p)=>{
+    deck.push({type:"Q", pid:p.id, text:p.q, face:false, matched:false, justFlipped:false});
+    deck.push({type:"A", pid:p.id, text:p.a, face:false, matched:false, justFlipped:false});
+  });
+  // 4 distractors
+  DISTRACT.forEach((d)=> deck.push({type:"A", pid:d.id, text:d.a, face:false, matched:false, justFlipped:false}));
+
+  shuffle(deck); render();
+}
+
+/* ----------------------- RENDER WITH FLIP TRICK ----------------------- */
+function render(){
+  const b=$("#board"); b.innerHTML="";
+  const toAnimate=[];
+
+  deck.forEach((c,i)=>{
+    const el=document.createElement("div");
+    // When a card was just flipped by click, render it initially NOT flipped, then add class next frame.
+    const shouldFlipNow = (c.face || c.matched) && !c.justFlipped;
+    el.className="card" + (shouldFlipNow ? " flipped" : "");
+    if(c.matched) el.classList.add("matched");
+    el.dataset.idx=i;
+
+    const inner=document.createElement("div"); inner.className="inner";
+    const back=document.createElement("div"); back.className="face back";
+    back.textContent = c.type==="Q" ? Q_ICON : A_ICON;
+    const front=document.createElement("div"); front.className="face front";
+    const txt=document.createElement("div"); txt.className="text"; txt.textContent=c.text; front.appendChild(txt);
+    inner.appendChild(back); inner.appendChild(front); el.appendChild(inner);
+
+    if(c.justFlipped){ toAnimate.push(i); } // schedule flip animation
+
+    el.onclick=()=>flip(i);
+    b.appendChild(el);
+  });
+
+  // Trigger flip animation for newly clicked cards after paint
+  if(toAnimate.length){
+    requestAnimationFrame(()=>{
+      const cards = document.querySelectorAll('.card');
+      toAnimate.forEach(idx=>{
+        cards[idx]?.classList.add('flipped');
+        deck[idx].justFlipped = false; // consumed
+      });
+    });
+  }
+}
+
+/* ----------------------- GAME LOGIC ----------------------- */
+function flip(i){
+  if(lock) return;
+  const c=deck[i];
+  if(c.face || c.matched) return;
+
+  // mark to animate and reveal
+  c.face = true;
+  c.justFlipped = true; // flip trick
+  flipped.push(i);
+  render();
+
+  if(flipped.length===2){ lock=true; setTimeout(check,560); }
+}
+
+function check(){
+  const [i1,i2]=flipped; const c1=deck[i1],c2=deck[i2]; let ok=false;
+  if(c1.type!==c2.type && c1.pid===c2.pid && !String(c1.pid).startsWith('d')) ok=true;
+
+  if(ok){
+    c1.matched=c2.matched=true; found++; $("#found").textContent=found; playDing(); toast("Correct!",true);
+    render(); // keep them face-up and styled as matched
+  }else{
+    playBuzz(); toast("Wrong pair",false);
+    // rotate back first, then clear state & re-render
+    const cards=document.querySelectorAll('.card');
+    cards[i1]?.classList.remove('flipped');
+    cards[i2]?.classList.remove('flipped');
+    setTimeout(()=>{
+      c1.face=false; c2.face=false;
+      c1.justFlipped=false; c2.justFlipped=false;
+      render();
+    }, 330);
+  }
+
+  turns++; $("#turns").textContent=turns;
+  if(ok){ score[player]++; $("#s"+player).textContent=score[player]; }
+
+  // switch player every turn
+  player=(player===1?2:1);
+  $("#p1").classList.toggle("active",player===1);
+  $("#p2").classList.toggle("active",player===2);
+
+  flipped=[]; lock=false;
+
+  if(found>=6){ endGame(); }
+}
+
+function endGame(){
+  celebrateWin();
+  const p1=score[1], p2=score[2];
+  let msg = `Finished in ${turns} turns. `;
+  if(p1>p2) msg += `Winner: Player 1 (${p1} pairs).`;
+  else if(p2>p1) msg += `Winner: Player 2 (${p2} pairs).`;
+  else msg += `It’s a draw! (${p1}–${p2}).`;
+  $("#winText").textContent = "🎉 " + msg;
+  $("#winModal").style.display = "flex";
+}
+
+/* ----------------------- EVENTS ----------------------- */
+$("#reload").onclick=()=>{ $("#winModal").style.display="none"; buildDeck(); };
+$("#playAgain").onclick=()=>{ $("#winModal").style.display="none"; buildDeck(); };
+$("#closeWin").onclick=()=>{ $("#winModal").style.display="none"; };
+
+/* ----------------------- START ----------------------- */
+buildDeck();
+</script>
+
+</body>
+</html>
