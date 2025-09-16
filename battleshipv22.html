@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>⚓ Battleship — Revision</title>
+<style>
+  :root { --bg:#0b1220; --panel:#0f1b33; --panel2:#122041; --ink:#e6edf3; --muted:#93a0b8;
+          --accent:#1f6feb; --accent2:#2ea043; --warn:#f85149; --hit:#ff6b6b; --miss:#5fb3ff;
+          --sunk:#ffb703; --grid:#0d1a33; --line:#1c2d57; --pill:#0e1d3a; --shadow:rgba(0,0,0,.35); }
+  * { box-sizing:border-box; }
+  html,body { height:100%; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+  body { margin:0; display:flex; flex-direction:column; }
+
+  /* Top bar */
+  header {
+    position:sticky; top:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 18px;
+    background:linear-gradient(90deg,#0c1b3c,#0e2a62);
+    border-bottom:1px solid #0f2349; box-shadow:0 2px 8px var(--shadow);
+  }
+  header .title { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:1.2rem; letter-spacing:.2px; font-weight:800; }
+  header .byline { font-style:italic; opacity:.9; }
+  .hits-pill {
+    background:var(--pill); border:1px solid #1b2b55; padding:8px 12px; border-radius:999px;
+    font-weight:700; letter-spacing:.2px; box-shadow:0 2px 6px var(--shadow);
+  }
+
+  /* Layout */
+  .wrap { display:grid; grid-template-columns:280px 1fr; gap:18px; padding:18px; max-width:1200px; margin:0 auto; width:100%; }
+  aside { background:var(--panel); border:1px solid #0f2349; border-radius:12px; padding:14px; box-shadow:0 4px 16px var(--shadow); }
+  .legend { margin-bottom:16px; }
+  .legend h3, .status h3 { margin:.2rem 0 .6rem 0; font-size:1rem; }
+  .swatch { display:flex; align-items:center; gap:8px; margin:6px 0; font-size:.95rem; color:var(--muted);}
+  .box { width:16px; height:16px; border-radius:3px; border:1px solid #203a75; }
+  .b-empty { background:#14264e; } .b-hit { background:var(--hit); } .b-miss { background:var(--miss); } .b-sunk { background:var(--sunk); }
+
+  .status ul { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+  .ship-line { display:flex; align-items:center; gap:8px; justify-content:space-between; }
+  .pips { display:flex; gap:4px; }
+  .pip { width:14px; height:14px; border-radius:50%; background:#2a3d72; border:1px solid #28427a; }
+  .pip.on { background:var(--accent2); border-color:#2c8d55; }
+  .pip.sunk { background:var(--sunk); border-color:#a06a00; }
+
+  main { background:var(--panel2); border:1px solid #0f2349; border-radius:12px; padding:16px; box-shadow:0 4px 16px var(--shadow); }
+  .boards { display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start; }
+  .board-title { text-align:center; font-weight:800; margin:.25rem 0 .5rem 0; }
+  .placing-info { text-align:center; color:var(--muted); margin-top:4px; font-size:.95rem; }
+
+  table.board {
+    border-collapse:collapse; margin:0 auto; background:var(--grid); border:1px solid var(--line);
+    box-shadow:0 6px 18px var(--shadow);
+  }
+  .board td {
+    width:42px; height:42px; border:1px solid var(--line); text-align:center; vertical-align:middle;
+    cursor:pointer; position:relative; transition:background .12s;
+  }
+  .board td:hover { outline:2px solid #2a4ea3; outline-offset:-2px; }
+  .board td.disabled { cursor:default; }
+  .cell-ship { background:#183877; }
+  .cell-hit { background:var(--hit) !important; }
+  .cell-miss { background:var(--miss) !important; }
+  .cell-sunk { background:var(--sunk) !important; color:#1a1a1a; }
+
+  /* Ghost preview during placement (no leftovers) */
+  .cell-ghost-ok { box-shadow: inset 0 0 0 3px #2ea043aa; background:#1b3f7a; }
+  .cell-ghost-bad { box-shadow: inset 0 0 0 3px #f85149aa; background:#5a1b1b; }
+
+  .controls { display:flex; gap:10px; justify-content:center; margin:12px 0 0 0; flex-wrap:wrap; }
+  .controls button { background:#173167; border:1px solid #27407a; color:var(--ink); padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700; }
+  .controls button:disabled { opacity:.5; cursor:not-allowed; }
+  .rotation-label { text-align:center; margin-top:8px; color:var(--muted); font-size:.95rem; }
+  .guide { margin-top:14px; text-align:center; color:var(--muted); }
+
+  .overlay, .handover { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); z-index:200; }
+  .handover { background:rgba(0,0,0,.98); }
+  .modal {
+    width:min(560px, calc(100% - 28px)); background:#0f1b33; border:1px solid #25407f; border-radius:12px; padding:16px;
+    box-shadow:0 10px 30px var(--shadow);
+  }
+  .modal h2 { margin:.25rem 0 .5rem 0; }
+  .modal p { color:#c7d2e3; }
+  .modal input[type="text"] { width:100%; padding:10px 12px; border-radius:8px; border:1px solid #2a4588; background:#0d1d3e; color:#fff; }
+  .modal .row { display:flex; gap:10px; margin-top:12px; }
+  .modal button { background:#1b3b83; border:1px solid #2e4c94; color:#fff; padding:10px 14px; border-radius:8px; font-weight:800; cursor:pointer; }
+
+  .toast {
+    position:fixed; left:50%; transform:translateX(-50%); bottom:24px; background:#11214a; color:#e6edf3;
+    border:1px solid #244176; padding:10px 16px; border-radius:999px; font-weight:700; box-shadow:0 6px 20px var(--shadow);
+    z-index:250; display:none;
+  }
+
+  .top-actions { display:flex; gap:10px; justify-content:center; margin-top:12px; }
+  .top-actions button { background:#133067; border:1px solid #2a478d; color:#e6edf3; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700; }
+
+  @media (max-width: 960px) { .wrap { grid-template-columns:1fr; } .boards { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="title">
+    <h1>⚓ Battleship — Revision</h1>
+    <span class="byline"><em>Designed by Mr Johann Lim</em></span>
+  </div>
+  <div class="hits-pill" id="hitsPill">🎯 Hits — P1: 0 • P2: 0</div>
+</header>
+
+<div class="wrap">
+  <aside>
+    <div class="legend">
+      <h3>Legend</h3>
+      <div class="swatch"><span class="box b-empty"></span> <span>Empty sea</span></div>
+      <div class="swatch"><span class="box b-hit"></span> <span>Hit</span></div>
+      <div class="swatch"><span class="box b-miss"></span> <span>Miss</span></div>
+      <div class="swatch"><span class="box b-sunk"></span> <span>Sunk</span></div>
+    </div>
+    <div class="status">
+      <h3>Fleet Status</h3>
+      <ul id="fleetStatus"></ul>
+    </div>
+    <div class="top-actions">
+      <button id="newMatchBtn">New Match</button>
+      <button id="revealBtn">Reveal Fleets</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="boards">
+      <section class="board-wrap own">
+        <div class="board-title" id="ownTitle">Player 1 — Your Fleet</div>
+        <div class="placing-info" id="placingInfo"></div>
+        <table class="board" id="ownBoard" aria-label="Own Fleet Grid"></table>
+        <div class="controls">
+          <button id="rotateBtn" title="Rotate ship (R)">Rotate</button>
+          <button id="resetBtn" title="Reset placement">Reset</button>
+          <button id="doneBtn" title="Done placing">Done Placing</button>
+        </div>
+        <div class="rotation-label" id="rotationLabel">Rotation: Horizontal</div>
+      </section>
+
+      <section class="board-wrap target">
+        <div class="board-title" id="targetTitle">Target Grid (Player 1 shoots)</div>
+        <table class="board" id="targetBoard" aria-label="Target Grid"></table>
+        <p class="guide">🧨 Admiral, select a square to fire at the enemy, but note: the cannon fires only if you answer correctly.</p>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- Question modal -->
+<div class="overlay" id="qOverlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2>📜 Answer to launch</h2>
+    <p id="qText">Question goes here…</p>
+    <input type="text" id="qInput" placeholder="Type your answer and press Enter"/>
+    <small style="color:#93a0b8; display:block; margin-top:6px;">Short forms are okay. Capitals and small typos are ignored.</small>
+    <div class="row"><button id="fireBtn">Fire</button><button id="cancelQBtn">Cancel</button></div>
+  </div>
+</div>
+
+<!-- Result modal -->
+<div class="overlay" id="rOverlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2 id="rTitle">Result</h2>
+    <p id="rBody">Body</p>
+    <div class="row"><button id="okResultBtn">OK</button></div>
+  </div>
+</div>
+
+<!-- Handover blackout -->
+<div class="handover" id="handover">
+  <div class="modal" style="text-align:center;">
+    <p id="handoverMsg" style="font-size:1.1rem; line-height:1.45;">
+      Please pass the device to your opponent. Player 2, when you are ready, click the I’m Ready button below.
+    </p>
+    <div class="row" style="justify-content:center;"><button id="readyBtn">I’m Ready</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Toast</div>
+
+<script>
+/* =========================
+   Audio (WebAudio)
+   ========================= */
+const AudioCtx = window.AudioContext || window.webkitAudioContext; let actx;
+const ensureAudio = () => { if (!actx) actx = new AudioCtx(); };
+const now = () => actx.currentTime;
+function clickSound(){ ensureAudio(); const o=actx.createOscillator(),g=actx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(800,now()); g.gain.setValueAtTime(0.001,now()); g.gain.linearRampToValueAtTime(0.06,now()+0.01); g.gain.exponentialRampToValueAtTime(0.001,now()+0.08); o.connect(g).connect(actx.destination); o.start(); o.stop(now()+0.09); }
+function wrongSound(){ ensureAudio(); const o=actx.createOscillator(),g=actx.createGain(); o.type='square'; o.frequency.setValueAtTime(620,now()); o.frequency.linearRampToValueAtTime(400,now()+0.12); g.gain.setValueAtTime(0.06,now()); g.gain.exponentialRampToValueAtTime(0.001,now()+0.15); o.connect(g).connect(actx.destination); o.start(); o.stop(now()+0.16); }
+function burstNoise(d=0.18,lp=900){ const n=actx.sampleRate*d,b=actx.createBuffer(1,n,actx.sampleRate),data=b.getChannelData(0); for(let i=0;i<n;i++) data[i]=(Math.random()*2-1)*0.6; const s=actx.createBufferSource(); s.buffer=b; const f=actx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=lp; const g=actx.createGain(); g.gain.value=0.12; s.connect(f).connect(g).connect(actx.destination); s.start(); s.stop(now()+d); }
+function hitSound(){ ensureAudio(); burstNoise(0.22,1200); const o=actx.createOscillator(),g=actx.createGain(); o.type='sine'; o.frequency.setValueAtTime(120,now()); g.gain.setValueAtTime(0.08,now()); g.gain.exponentialRampToValueAtTime(0.001,now()+0.25); o.connect(g).connect(actx.destination); o.start(); o.stop(now()+0.26); }
+function missSound(){ ensureAudio(); burstNoise(0.12,2400); const o=actx.createOscillator(),g=actx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(900,now()); o.frequency.exponentialRampToValueAtTime(450,now()+0.18); g.gain.setValueAtTime(0.06,now()); g.gain.exponentialRampToValueAtTime(0.001,now()+0.2); o.connect(g).connect(actx.destination); o.start(); o.stop(now()+0.21); }
+
+/* =========================
+   Toast
+   ========================= */
+const toastEl = document.getElementById('toast'); let toastTimer;
+function toast(msg, ms=1600){ toastEl.textContent=msg; toastEl.style.display='block'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>toastEl.style.display='none', ms); }
+
+/* =========================
+   Game State
+   ========================= */
+const SIZE=6;
+const SHIPS=[{key:'carrier',name:'Aircraft Carrier',len:5},{key:'battleship',name:'Battleship',len:4},{key:'destroyer',name:'Destroyer',len:3},{key:'submarine',name:'Submarine',len:3},{key:'gunboat',name:'Gunboat',len:2}];
+function emptyGrid(){ return Array.from({length:SIZE},()=>Array(SIZE).fill(0)); }
+function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+const players=[{id:1,board:emptyGrid(),ships:[],placed:false,hits:0,shots:new Set()},{id:2,board:emptyGrid(),ships:[],placed:false,hits:0,shots:new Set()}];
+let currentPlr=0, placingFor=0, placeIdx=0, isVertical=false, fightPhase=false, lastTargetCell=null, revealMode=false;
+
+/* Question repetition control */
+let turnIndex = 0;                 // increments each time we hand over turns
+const lastServed = [null, null];   // last question id seen by each player
+const cooldown = new Map();        // qId -> turnIndex until which it's blocked (inclusive)
+
+/* =========================
+   DOM refs
+   ========================= */
+const ownBoardEl=document.getElementById('ownBoard');
+const targetBoardEl=document.getElementById('targetBoard');
+const ownTitleEl=document.getElementById('ownTitle');
+const targetTitleEl=document.getElementById('targetTitle');
+const placingInfo=document.getElementById('placingInfo');
+const rotationLabel=document.getElementById('rotationLabel');
+const rotateBtn=document.getElementById('rotateBtn');
+const resetBtn=document.getElementById('resetBtn');
+const doneBtn=document.getElementById('doneBtn');
+const hitsPill=document.getElementById('hitsPill');
+const fleetStatusEl=document.getElementById('fleetStatus');
+const handoverEl=document.getElementById('handover');
+const handoverMsg=document.getElementById('handoverMsg');
+const readyBtn=document.getElementById('readyBtn');
+const newMatchBtn=document.getElementById('newMatchBtn');
+const revealBtn=document.getElementById('revealBtn');
+
+const qOverlay=document.getElementById('qOverlay');
+const qText=document.getElementById('qText');
+const qInput=document.getElementById('qInput');
+const fireBtn=document.getElementById('fireBtn');
+const cancelQBtn=document.getElementById('cancelQBtn');
+
+const rOverlay=document.getElementById('rOverlay');
+const rTitle=document.getElementById('rTitle');
+const rBody=document.getElementById('rBody');
+const okResultBtn=document.getElementById('okResultBtn');
+
+/* =========================
+   Build Boards
+   ========================= */
+function buildBoard(el, clickHandler){
+  el.innerHTML='';
+  for(let r=0;r<SIZE;r++){
+    const tr=document.createElement('tr');
+    for(let c=0;c<SIZE;c++){
+      const td=document.createElement('td'); td.dataset.r=r; td.dataset.c=c;
+      td.addEventListener('click', clickHandler);
+      if (el===ownBoardEl){
+        td.addEventListener('mouseenter', ()=>drawGhost(r,c));
+        td.addEventListener('mousemove',  ()=>drawGhost(r,c));
+        td.addEventListener('mouseleave', clearGhost);
+      }
+      tr.appendChild(td);
+    }
+    el.appendChild(tr);
+  }
+}
+
+function refreshBoards(){
+  const P=players[currentPlr], OPP=players[1-currentPlr];
+  ownTitleEl.textContent=`Player ${P.id} — Your Fleet`;
+  targetTitleEl.textContent=`Target Grid (Player ${P.id} shoots)`;
+  hitsPill.textContent=`🎯 Hits — P1: ${players[0].hits} • P2: ${players[1].hits}`;
+
+  // own
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const td=ownBoardEl.rows[r].cells[c]; const v=P.board[r][c];
+      td.className='';
+      if (v===1) td.classList.add('cell-ship');
+      if (v===3) td.classList.add('cell-hit');
+      if (v===2) td.classList.add('cell-miss');
+      if (v===4) td.classList.add('cell-sunk');
+      if (fightPhase || P.placed) td.classList.add('disabled'); else td.classList.remove('disabled');
+    }
+  }
+
+  // target
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const td=targetBoardEl.rows[r].cells[c]; td.className='';
+      const key=`${r},${c}`; const shot=players[currentPlr].shots.has(key);
+      if (!fightPhase) td.classList.add('disabled');
+      if (shot){
+        const v=OPP.board[r][c];
+        if (v===3 || v===4) td.classList.add(v===4?'cell-sunk':'cell-hit'); else td.classList.add('cell-miss');
+      }
+      if (!shot && !fightPhase) td.classList.add('disabled');
+    }
+  }
+
+  renderFleetStatus(P);
+  updatePlacingInfo();
+  clearGhost(); // ensure no leftover ghost after redraw
+}
+
+function renderFleetStatus(P){
+  fleetStatusEl.innerHTML='';
+  for(const s of SHIPS){
+    const placed=P.ships.find(x=>x.key===s.key);
+    const li=document.createElement('li'); li.className='ship-line';
+    const name=document.createElement('span'); name.textContent=s.name;
+    const pips=document.createElement('div'); pips.className='pips';
+    for(let i=0;i<s.len;i++){
+      const dot=document.createElement('span'); dot.className='pip';
+      if (placed){ if (placed.hits>i) dot.classList.add('on'); if (placed.sunk) dot.classList.add('sunk'); }
+      pips.appendChild(dot);
+    }
+    li.appendChild(name); li.appendChild(pips); fleetStatusEl.appendChild(li);
+  }
+}
+
+/* =========================
+   Placement + Ghost Preview
+   ========================= */
+function placeable(board,r,c,len,vertical){
+  if (vertical){ if (r+len>SIZE) return false; for(let i=0;i<len;i++) if (board[r+i][c]!==0) return false; }
+  else { if (c+len>SIZE) return false; for(let i=0;i<len;i++) if (board[r][c+i]!==0) return false; }
+  return true;
+}
+function placeShip(P, ship, r,c){
+  if (!placeable(P.board,r,c,ship.len,isVertical)) return false;
+  const coords=[]; if (isVertical){ for(let i=0;i<ship.len;i++){ P.board[r+i][c]=1; coords.push([r+i,c]); } }
+  else { for(let i=0;i<ship.len;i++){ P.board[r][c+i]=1; coords.push([r,c+i]); } }
+  P.ships.push({ key:ship.key, name:ship.name, len:ship.len, coords, hits:0, sunk:false });
+  return true;
+}
+function clearPlacements(P){ P.board=emptyGrid(); P.ships=[]; placeIdx=0; clearGhost(); updatePlacingInfo(); }
+
+function drawGhost(r,c){
+  clearGhost();
+  const P=players[placingFor]; const ship=SHIPS[placeIdx];
+  if (!ship || P.placed || fightPhase) return;
+  const ok=placeable(P.board,r,c,ship.len,isVertical);
+  for(let i=0;i<ship.len;i++){
+    const rr=isVertical? r+i : r;
+    const cc=isVertical? c   : c+i;
+    if (rr>=0 && rr<SIZE && cc>=0 && cc<SIZE){
+      ownBoardEl.rows[rr].cells[cc].classList.add(ok?'cell-ghost-ok':'cell-ghost-bad');
+    }
+  }
+}
+function clearGhost(){
+  if (!ownBoardEl.rows.length) return;
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      ownBoardEl.rows[r].cells[c].classList.remove('cell-ghost-ok','cell-ghost-bad');
+    }
+  }
+}
+function onOwnClick(e){
+  if (fightPhase) return;
+  const P=players[placingFor]; if (P.placed) return;
+  const r=+e.currentTarget.dataset.r, c=+e.currentTarget.dataset.c;
+  const ship=SHIPS[placeIdx]; if (!ship) return;
+
+  if (placeShip(P, ship, r,c)){
+    clickSound(); placeIdx++; clearGhost();
+    if (placeIdx>=SHIPS.length){
+      doneBtn.disabled=false;
+      toast(`All ships placed for Player ${P.id}. Click “Done Placing”.`,1800);
+    } else {
+      const next=SHIPS[placeIdx];
+      toast(`Placed ${ship.name}. Next: ${next.name} (${next.len}).`,1500);
+    }
+    refreshBoards(); updateControlsForPlacement();
+  } else {
+    toast('Cannot place there.', 1200);
+  }
+}
+function updatePlacingInfo(){
+  const P=players[placingFor];
+  const s=SHIPS[placeIdx];
+  placingInfo.textContent = (!fightPhase && !P.placed && s)
+    ? `Placing: ${s.name} (${s.len}) — press R to rotate`
+    : '';
+}
+
+/* =========================
+   Fight Phase
+   ========================= */
+function allSunk(P){ return P.ships.length===SHIPS.length && P.ships.every(s=>s.sunk); }
+function markSunkCells(P, ship){ for (const [r,c] of ship.coords){ P.board[r][c]=4; } }
+function registerShot(shooter, defender, r,c){
+  const key=`${r},${c}`; if (shooter.shots.has(key)) return {already:true}; shooter.shots.add(key);
+  if (defender.board[r][c]===1){
+    defender.board[r][c]=3; const ship=defender.ships.find(s=>s.coords.some(([rr,cc])=>rr===r&&cc===c)); ship.hits++;
+    let sunkNow=false; if (ship.hits>=ship.len){ ship.sunk=true; markSunkCells(defender,ship); sunkNow=true; }
+    shooter.hits++; return {hit:true,sunk:sunkNow,ship:ship.name};
+  } else { if (defender.board[r][c]===0) defender.board[r][c]=2; return {hit:false}; }
+}
+
+/* =========================
+   Questions & Checking
+   ========================= */
+function normStr(s){ return s.toLowerCase().trim().replace(/[^\p{L}\p{N}\s-]/gu,'').replace(/\s+/g,' '); }
+function levenshtein(a,b){ const m=a.length,n=b.length,dp=Array.from({length:m+1},()=>Array(n+1).fill(0)); for(let i=0;i<=m;i++) dp[i][0]=i; for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){ for(let j=1;j<=n;j++){ const cost=a[i-1]===b[j-1]?0:1; dp[i][j]=Math.min(dp[i-1][j]+1,dp[i][j-1]+1,dp[i-1][j-1]+cost);} } return dp[m][n]; }
+function parseNumeric(s){ s=normStr(s).replace(/,/g,''); s=s.replace(/\bone\b hundred\b (thousand)?/g,(_,th)=> th?'100000':'100'); let m;
+  if ((m=s.match(/(\d+(\.\d+)?)\s*(bn|b|billion)\b/))) return Math.round(parseFloat(m[1])*1_000_000_000);
+  if ((m=s.match(/(\d{1,3}(\d{3})+)\b/))) return parseInt(m[1],10);
+  const num=parseFloat(s); return isNaN(num)?null:num;
+}
+
+const QUESTIONS=[
+/* TOV */
+{q:1,t:"Which country wanted to be harshest on Germany in the Paris Peace Conference?",a:["france","french"]},
+{q:2,t:"Which country wanted to be the most lenient on Germany in the Paris Peace Conference?",a:["usa","united states","america","united states of america"]},
+{q:3,t:"Which country wanted Germany to be able to recover from the TOV so that they can be a shield against communism?",a:["britain","united kingdom","uk","england","great britain"]},
+{q:4,t:"What was the amount of reparations (in British pounds) Germany had to pay under the Treaty of Versailles?",a:["6.6 billion","6.6bn","6.6b","6600000000","6,600,000,000","6.6 billion pounds"],numeric:6600000000},
+{q:5,t:"What was the name of the term in the TOV where Germany had to accept total blame? (_ _ _  _ _ _ _ _  _ _ _ _ _ _)",a:["war guilt clause","the war guilt clause"]},
+{q:6,t:"How many soldiers maximum was Germany allowed under the Treaty of Versailles?",a:["100000","100,000","one hundred thousand"],numeric:100000},
+{q:7,t:"What was the area of Germany that was given to Poland called? (two words)",a:["polish corridor","the polish corridor"]},
+{q:8,t:"What was the area of Germany that had to be demilitarised under the TOV?",a:["rhineland","the rhineland"]},
+{q:9,t:"The TOV banned Germany from forcibly recruiting/enlisting soldiers. What is the name of this process of compulsory military service (similar to National Service in Singapore)?",a:["conscription","the draft","draft"]},
+
+/* LON */
+{q:10,t:"What was the name of the idea that all members of the league would defend each other? (two words)",a:["collective security","the principle of collective security","the collective security"]},
+{q:11,t:"Which country was militarily strong and the richest but not in the LON?",a:["usa","united states","america","united states of america"]},
+{q:12,t:"In which areas or crisis did the LON succeed in resolving disputes in the 1920s?",a:["upper silesia","greek-bulgarian crisis","greco-bulgarian crisis","greek bulgarian crisis"]},
+{q:13,t:"In which areas or crisis did the LON fail in resolving disputes in the 1920s?",a:["vilna","corfu"]},
+{q:14,t:"What was the name of the method LON hoped to achieve world peace by reducing the chance of conflict?",a:["disarmament","disarming","disarm"]},
+{q:15,t:"What was the name for LON’s punishment of cutting trade to aggressor nations?",a:["economic sanctions","sanctions"]},
+{q:16,t:"What was the main reason LON did not use military force against aggressor nations? It lacked its own _ _ _ _.",a:["army","military"]},
+
+/* Rise */
+{q:17,t:"What was the name of the communist uprising against the Weimar Government?",a:["spartacist uprising","spartacist revolt","spartacist"]},
+{q:18,t:"What was the name of the right-wing attempt to overthrow the Weimar Government?",a:["kapp putsch","kapp uprising","the kapp putsch"]},
+{q:19,t:"What was the name of the President who appointed Hitler as chancellor and whose death in 1934 allowed Hitler to become Fuhrer?",a:["hindenburg","paul von hindenburg"]},
+{q:20,t:"What was the name of the event where Hitler tried to overthrow the government by force in 1923 but failed to do so? (two words)",a:["munich putsch","beer hall putsch","munich beer hall putsch"]},
+{q:21,t:"Which political party did Hitler attack and raise alarm bells about so rich businessmen would support the Nazis?",a:["communists","communist","kpd"]},
+{q:22,t:"What was the name of the global economic crisis that saw Germany face massive unemployment, homelessness and misery?",a:["the great depression","great depression"]},
+{q:23,t:"What was the name of the system of representation in the Weimar Government whereby political parties often needed to join other parties to form coalition governments?",a:["proportional representation","proportionate representation"]},
+{q:24,t:"Many right-wing Germans believed Germany hadn’t been defeated in WW1 but betrayed by signing the TOV. What was the name of this myth? (____ __ ___ ____ myth)",a:["stab in the back myth","stab in the back","stab in back myth","stab in back"]},
+{q:25,t:"What was the name of the group of right-wing veterans of the German Army that crushed the Spartacist Uprising and later sought to overthrow the Weimar government themselves?",a:["freikorps"]},
+
+/* Rule */
+{q:26,t:"Which event in 1933 did Hitler use as an excuse to arrest the communists?",a:["reichstag fire"]},
+{q:27,t:"What was the name of the Nazi organisation that provided cruises, cinema tickets and dance classes to Germans?",a:["strength through joy","kdf","kraft durch freude"]},
+{q:28,t:"What was the name of the Nazi organisation that gave young German men jobs to build autobahns and other infrastructure in Germany?",a:["reich labour service","reich labor service","rad","reichsarbeitsdienst"]},
+{q:29,t:"What was the name of the Nazi organisation that organised camps and field trips for young Germans?",a:["hitler youth","hj","hitlerjugend"]},
+{q:30,t:"What was the name of the organisation for young German females to learn about being a good mother and housewife?",a:["league of german girls","bdm","bund deutscher mädel","bund deutscher maedel"]},
+{q:31,t:"What was the name of the youth organisation that spread anti-Nazi leaflets?",a:["white rose","the white rose"]},
+{q:32,t:"What was the name of the event that saw sudden significant rises in the price of goods?",a:["hyperinflation","ruhr","ruhr crisis"]},
+{q:33,t:"What was the name of the Nazi policy that saw conscription being reintroduced and recruitment of men to work in arms factories?",a:["rearmament","remilitarisation","remilitarization","re-militarisation","re-militarization"]},
+{q:34,t:"The Nazis banned all trade unions and forced workers to join the Deutsche Arbeitsfront. What is the English name of this Nazi trade union?",a:["german labour front","german labor front","daf"]},
+{q:35,t:"What was the name of the mass murder of over six million Jews by Nazi Germany?",a:["holocaust","the holocaust","final solution","the final solution"]},
+{q:36,t:"Who was the SA leader who, along with many SA leaders, was killed in the Night of Long Knives by the SS?",a:["ernst rohm","rohm","röhm","roehm"]},
+{q:37,t:"What was the name of the event in 1938 where many Jewish shops and homes were vandalised and robbed? (Four words)",a:["night of broken glass","kristallnacht"]},
+{q:38,t:"What were the laws that stripped Jews of their citizenship and banned interracial marriages with Jews? (The _ _ _ _ _ _ _ _ _ Laws)",a:["nuremberg laws","nuernberg laws"]},
+
+/* Origins of WW2 */
+{q:39,t:"What was the name of the crisis where Italy invaded a country in Africa and the LON did little to stop them? (_ _ _ _ _ _ _ _ _ _ Crisis)",a:["abyssinian crisis","the abyssinian crisis"]},
+{q:40,t:"What was the name of the conference where attempts to limit arms in Europe failed due to France being wary of disarming to Germany’s level?",a:["world disarmament conference"]},
+{q:41,t:"Which country’s civil war did Germany get involved in to confirm the effectiveness of their air force’s bomber planes?",a:["spain","spanish civil war"]},
+{q:42,t:"What was the name of the event where Germany united with Austria?",a:["anschluss","the anschluss"]},
+{q:43,t:"Which part of Czechoslovakia did Germany first occupy in 1938?",a:["sudetenland"]},
+{q:44,t:"What was the name of the conference where the leaders of France and Britain met with Hitler to decide the fate of the Sudetenland?",a:["munich conference"]},
+{q:45,t:"What was the name of the leader of the Soviet Union in the 1930s?",a:["stalin","joseph stalin"]},
+{q:46,t:"What was the name of the agreement between Germany and the Soviet Union?",a:["nazi-soviet pact","nazi soviet pact","nazi-soviet non-aggression pact","molotov–ribbentrop pact","molotov ribbentrop pact"]},
+{q:47,t:"Germany’s invasion of which country triggered Britain and France to declare war on Germany?",a:["poland"]},
+{q:48,t:"Which leader believed Hitler only wanted to reunite ethnic Germans and not completely overturn the TOV?",a:["chamberlain","neville chamberlain"]},
+{q:49,t:"What was the name of the country Germany allied with in the Anti-Comintern Pact?",a:["japan","italy"]},  /* Italy accepted */
+{q:50,t:"What was the name of the leader of Fascist Italy?",a:["mussolini","benito mussolini"]},
+{q:51,t:"Which Asian country joined the Axis Alliance?",a:["japan"]},
+];
+
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } }
+let pool=[], wrongBacklog=[];
+function resetQuestions(){
+  pool=deepClone(QUESTIONS); shuffle(pool);
+  wrongBacklog=[];
+  turnIndex=0;
+  lastServed[0]=lastServed[1]=null;
+  cooldown.clear();
+}
+
+function acceptable(answer, q){
+  const normAns = normStr(answer);
+  for (const acc of q.a){
+    const normAcc = normStr(acc);
+    if (normAns===normAcc) return true;
+    if (normAcc.length>=6 && levenshtein(normAns, normAcc)<=2) return true;
+  }
+  if (q.numeric!=null){
+    const n = parseNumeric(answer);
+    if (n!=null && Math.abs(n-q.numeric)<=0) return true;
+  }
+  return false;
+}
+
+/* Non-repeating nextQuestion with cooldown & per-player memory */
+function nextQuestion(forPlayer){
+  const isBlocked = (qid) => cooldown.has(qid) && cooldown.get(qid) >= turnIndex;
+  const disallow = new Set([
+    lastServed[forPlayer],        // don't give same player same Q consecutively
+    lastServed[1-forPlayer]       // don't repeat the opponent's last Q immediately after
+  ]);
+
+  const pickFrom = (arr) => {
+    if (arr.length===0) return null;
+    // randomize order of indices
+    const idxs = arr.map((_,i)=>i);
+    for (let i=idxs.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [idxs[i],idxs[j]]=[idxs[j],idxs[i]]; }
+    for (const i of idxs){
+      const cand = arr[i];
+      if (!cand) continue;
+      if (isBlocked(cand.q)) continue;
+      if (disallow.has(cand.q)) continue;
+      arr.splice(i,1);
+      return cand;
+    }
+    return null;
+  };
+
+  let q = null;
+  if (wrongBacklog.length>0 && Math.random()<0.34) q = pickFrom(wrongBacklog);
+  if (!q){
+    if (pool.length===0){ pool=deepClone(QUESTIONS); shuffle(pool); }
+    q = pickFrom(pool);
+  }
+
+  // Relaxed fallback to avoid deadlock if everything is blocked
+  if (!q){
+    const relaxed = (arr)=>{
+      if (arr.length===0) return null;
+      const candidates = arr.filter(x=>x.q!==lastServed[forPlayer] && x.q!==lastServed[1-forPlayer]);
+      const src = candidates.length? candidates : arr;
+      const i = Math.floor(Math.random()*src.length);
+      const picked = src[i];
+      const idx = arr.indexOf(picked);
+      if (idx>=0) arr.splice(idx,1);
+      return picked;
+    };
+    q = relaxed(wrongBacklog) || relaxed(pool);
+  }
+  return q;
+}
+
+/* =========================
+   Question Modal Flow
+   ========================= */
+let currentQuestion = null;
+
+function openQuestionModal(){
+  currentQuestion = nextQuestion(currentPlr);
+  qText.textContent = currentQuestion.t;
+  qInput.value='';
+  qOverlay.style.display='flex';
+  qInput.focus();
+}
+function closeQuestionModal(){ qOverlay.style.display='none'; }
+function openResult(title, body){ rTitle.textContent=title; rBody.textContent=body; rOverlay.style.display='flex'; }
+function closeResult(){ rOverlay.style.display='none'; }
+
+/* =========================
+   Handover
+   ========================= */
+function showHandover(nextPlayerIndex, type='turn'){
+  const msg = (type==='placement')
+    ? `Please pass the device to your opponent. Player ${players[nextPlayerIndex].id}, place your ships. When you are ready, click the I’m Ready button below.`
+    : `Please pass the device to your opponent. Player ${players[nextPlayerIndex].id}, when you are ready, click the I’m Ready button below.`;
+  handoverMsg.textContent = msg;
+  handoverEl.style.display='flex';
+}
+function hideHandover(){ handoverEl.style.display='none'; }
+
+/* =========================
+   Build & Reset
+   ========================= */
+function setFightUI(enabled){
+  for (let r=0;r<SIZE;r++){
+    for (let c=0;c<SIZE;c++){
+      const td=ownBoardEl.rows[r].cells[c];
+      if (enabled) td.classList.add('disabled'); else td.classList.remove('disabled');
+    }
+  }
+}
+function updateControlsForPlacement(){
+  const placingP = players[placingFor];
+  rotateBtn.disabled = placingP.placed;
+  resetBtn.disabled  = placingP.placed;
+  doneBtn.disabled   = placingP.placed || (placingP.ships.length<SHIPS.length);
+  rotationLabel.textContent = `Rotation: ${isVertical? 'Vertical':'Horizontal'}`;
+}
+function beginPlacement(){
+  fightPhase=false; placingFor=0; placeIdx=0; isVertical=false; revealMode=false; currentPlr=0;
+  players.forEach(p=>{ p.board=emptyGrid(); p.ships=[]; p.placed=false; p.hits=0; p.shots=new Set(); });
+  revealBtn.disabled=true;
+  resetQuestions();
+  buildBoard(ownBoardEl, onOwnClick);
+  buildBoard(targetBoardEl, onTargetClick);
+  setFightUI(false);
+  updateControlsForPlacement();
+  doneBtn.disabled=true;
+  refreshBoards();
+}
+function startFight(){ fightPhase=true; currentPlr=0; setFightUI(true); refreshBoards(); }
+function endCheck(){
+  const OPP=players[1-currentPlr];
+  if (allSunk(OPP)){ toast(`🎉 Player ${players[currentPlr].id} wins!`,2600); revealBtn.disabled=false; return true; }
+  return false;
+}
+
+/* =========================
+   Target Click => Q modal
+   ========================= */
+function onTargetClick(e){
+  if (!fightPhase) return;
+  const r=+e.currentTarget.dataset.r, c=+e.currentTarget.dataset.c;
+  const shooter=players[currentPlr];
+  const key=`${r},${c}`;
+  if (shooter.shots.has(key)){ toast('Already targeted.',1400); return; }
+  lastTargetCell=[r,c];
+  clickSound();
+  openQuestionModal();
+}
+
+/* =========================
+   Events
+   ========================= */
+rotateBtn.addEventListener('click', ()=>{ isVertical=!isVertical; rotationLabel.textContent=`Rotation: ${isVertical? 'Vertical':'Horizontal'}`; clearGhost(); clickSound(); });
+resetBtn.addEventListener('click', ()=>{ clearPlacements(players[placingFor]); clickSound(); refreshBoards(); updateControlsForPlacement(); });
+doneBtn.addEventListener('click', ()=>{
+  const P=players[placingFor];
+  if (P.ships.length<SHIPS.length){ toast('Place all ships first.', 1200); return; }
+  P.placed=true; clickSound();
+  if (placingFor===0){ showHandover(1,'placement'); }
+  else { showHandover(0,'turn'); }
+  updateControlsForPlacement(); refreshBoards();
+});
+
+readyBtn.addEventListener('click', ()=>{
+  hideHandover(); clickSound();
+  if (!fightPhase){
+    if (players[0].placed && !players[1].placed){ placingFor=1; placeIdx=0; isVertical=false; currentPlr=1; refreshBoards(); updateControlsForPlacement(); }
+    else if (players[0].placed && players[1].placed){ currentPlr=0; startFight(); }
+  } else {
+    refreshBoards();
+  }
+});
+
+document.addEventListener('keydown', (e)=>{
+  if (e.key.toLowerCase()==='r' && !fightPhase){
+    isVertical=!isVertical; rotationLabel.textContent=`Rotation: ${isVertical? 'Vertical':'Horizontal'}`; clearGhost();
+  }
+});
+
+fireBtn.addEventListener('click', ()=>{
+  const ans=qInput.value;
+  if (!currentQuestion) return;
+
+  if (acceptable(ans, currentQuestion)){
+    // CORRECT -> fire
+    closeQuestionModal();
+    const [r,c]=lastTargetCell;
+    const shooter=players[currentPlr], defender=players[1-currentPlr];
+    const res=registerShot(shooter,defender,r,c);
+    // record last served now
+    lastServed[currentPlr] = currentQuestion.q;
+    if (res.already){ toast('Already targeted.',1400); return; }
+    if (res.hit){
+      hitSound();
+      if (res.sunk) openResult('💥 Target Hit', `Correct. Missile Launched. Target hit!\n🚢 Sunk: ${res.ship}.`);
+      else          openResult('💥 Target Hit', 'Correct. Missile Launched. Target hit!');
+    } else {
+      missSound();
+      openResult('💦 Splash', 'Correct. Missile Launched. Target missed.');
+    }
+  } else {
+    // WRONG -> no shot; return question later and cool down for one full turn
+    wrongSound();
+    closeQuestionModal();
+    wrongBacklog.push(currentQuestion);
+    cooldown.set(currentQuestion.q, turnIndex + 1); // block this q through the next full turn
+    openResult('❌ Launch Failed', 'Wrong. Missile failed to launch. Try again next time.');
+  }
+});
+
+qInput.addEventListener('keydown',(e)=>{ if (e.key==='Enter'){ fireBtn.click(); } });
+cancelQBtn.addEventListener('click', ()=>{ closeQuestionModal(); });
+
+okResultBtn.addEventListener('click', ()=>{
+  closeResult();
+  const ended=endCheck();
+  refreshBoards();
+  if (!ended){
+    currentPlr=1-currentPlr;
+    turnIndex += 1;               // advance turn (cooldowns reference this)
+    showHandover(currentPlr,'turn');
+  }
+});
+
+newMatchBtn.addEventListener('click', ()=>{ clickSound(); beginPlacement(); showHandover(0,'placement'); });
+
+revealBtn.addEventListener('click', ()=>{
+  // Simple reveal toggle: show opponent ships outlines on target grid if not fired yet
+  revealMode=!revealMode; clickSound();
+  const OPP=players[1-currentPlr];
+  for(let r=0;r<SIZE;r++){
+    for(let c=0;c<SIZE;c++){
+      const td=targetBoardEl.rows[r].cells[c];
+      const key=`${r},${c}`;
+      if (revealMode && OPP.board[r][c]===1){ td.classList.add('cell-ship'); }
+      else if (!players[currentPlr].shots.has(key)){ td.classList.remove('cell-ship'); }
+    }
+  }
+});
+
+/* =========================
+   Init
+   ========================= */
+buildBoard(ownBoardEl, onOwnClick);
+buildBoard(targetBoardEl, onTargetClick);
+beginPlacement();
+showHandover(0,'placement');
+</script>
+</body>
+</html>
