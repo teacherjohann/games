@@ -1,0 +1,694 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Cabinet Simulator — Singapore Governance (Story Mode)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#0b1226;--bg1:#0e1530;--panel:rgba(12,19,39,.7);--panel-b:#223054;--ink:#eef3ff;--muted:#a9b6d5;
+  --good:#16a34a;--warn:#f59e0b;--bad:#ef4444;--great:#3b82f6;--accent:#ef2f3a;--gold:#ffcc66;
+  --ring:0 0 0 2px rgba(239,47,58,.35);--shadow:0 8px 30px rgba(0,0,0,.35)
+}
+html,body{height:100%}
+body{
+  margin:0;color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  background:
+    radial-gradient(900px 500px at 95% -10%, rgba(239,47,58,.22), transparent 50%),
+    linear-gradient(180deg,var(--bg0),var(--bg1));
+}
+.wrap{max-width:1400px;margin:0 auto;padding:16px;display:grid;grid-template-columns:1fr 440px;gap:16px}
+.card{background:var(--panel);border:1px solid var(--panel-b);border-radius:14px;box-shadow:var(--shadow);backdrop-filter:blur(6px);padding:16px}
+h1,h2,h3{margin:6px 0 10px}
+.small{color:var(--muted);font-size:12px}
+.badge{display:inline-flex;gap:6px;align-items:center;border:1px solid #2a3a63;background:#0f1b3b;border-radius:999px;padding:4px 10px;font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* Scenario (left) */
+.section{margin-top:18px}
+.section h4{margin:0 0 8px 0;font-weight:700}
+.section p{margin:6px 0 0 0;line-height:1.6}
+.voices li{margin:6px 0 0 0}
+.option{display:block;text-align:left;padding:16px;border-radius:12px;border:1px solid #263356;background:linear-gradient(180deg,#13224a,#0f1d43);color:var(--ink);cursor:pointer;transition:.15s}
+.option+.option{margin-top:12px}
+.option:hover{transform:translateY(-1px);background:linear-gradient(180deg,#172a59,#102252)}
+.option .title{font-weight:700}
+.option .desc{margin-top:6px;color:#d7e5ff}
+.impacts{margin-top:8px;font-size:13px;color:#cfe4ff}
+
+/* Outcomes: 5 horizontal gauges (50-point scale colour bands) */
+.gauge{margin:12px 0}
+.glabel{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.glabel .name{display:flex;gap:8px;align-items:center}
+.glabel .name .info{border-bottom:1px dotted #7aa5ff;cursor:help}
+.track{position:relative;height:14px;border-radius:999px;overflow:hidden;border:1px solid #243153;background:
+  linear-gradient(90deg,
+    #2b0e10 0 38%,
+    #3a2b0d 38% 54%,
+    #0b2a16 54% 84%,
+    #0b2444 84% 100%)}
+.fill{height:100%;background:linear-gradient(90deg,#ef2f3a,#ff7a84,#ffd08a);width:60%}
+.delta{position:absolute;right:0;top:-18px;font-size:12px}
+.safe{margin-top:6px;font-size:12px;color:#bcd5ff}
+
+/* Stakeholders: vertical bars */
+.stakesGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:end;min-height:210px}
+.stakeV{display:flex;flex-direction:column;align-items:center;gap:6px}
+.vbar{position:relative;width:28px;height:150px;border:1px solid #243153;background:#0c1327;border-radius:10px;overflow:hidden}
+.vfill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#ef2f3a,#ff7a84,#ffd08a);height:50%}
+.slabel{text-align:center;font-size:12px}
+.sval{font-size:11px;color:#a9b6d5}
+.pill{font-size:11px;border:1px solid #2a3a63;background:#0f1b3b;border-radius:999px;padding:2px 6px}
+.pill.warn{border-color:#5b1f1f;background:#3a1111}
+.pill.warn::before{content:"⚠️ "}
+.pill.ok::before{content:"✅ "}
+
+/* Story log */
+#log .entry{padding:8px;border:1px solid #223054;border-radius:10px;background:rgba(255,255,255,.03);margin-bottom:10px}
+#log .entry .t{font-weight:700;margin-bottom:4px}
+#log .entry .m{font-size:12px;color:#b9c6e4}
+
+/* Overlays (Prologue, Tour, Aftermath, Shock banner) */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+.sheet{max-width:760px;background:#0d1530;border:1px solid #223054;border-radius:14px;box-shadow:var(--shadow);padding:18px}
+.sheet h2{margin-top:0}
+.sheet .actions{display:flex;justify-content:space-between;margin-top:12px}
+.btn{border:1px solid #2a3a63;background:#0f1b3b;color:var(--ink);padding:10px 14px;border-radius:10px;cursor:pointer}
+.btn.primary{background:linear-gradient(180deg,#1b366f,#132d61);border-color:#365ea1}
+.btn:focus-visible{outline:none;box-shadow:var(--ring)}
+
+/* Shock banner */
+.banner{position:fixed;left:50%;transform:translateX(-50%);top:10px;background:#2b0f12;border:1px solid #5a1f26;padding:10px 16px;border-radius:999px;z-index:40;display:none}
+.banner b{color:#ffc3c7}
+hr.sep{border:0;border-top:1px solid #1f2a49;margin:14px 0}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <!-- LEFT: Scenario -->
+  <div class="card" id="scenarioCard">
+    <div class="row small">
+      <span class="badge">📜 Scenario <span id="scnIndex">1</span> of <span id="scnTotal">9</span></span>
+      <span class="badge" id="complexityBadge">🧩 Complexity: —</span>
+    </div>
+    <h2 id="scnTitle">—</h2>
+
+    <div class="section">
+      <h4>📜 Context</h4>
+      <p id="scnContext" class="small">—</p>
+    </div>
+
+    <div class="section">
+      <h4>🗣️ Voices</h4>
+      <ul id="scnVoices" class="small voices"></ul>
+    </div>
+
+    <div class="section">
+      <h4>🧭 Choose a policy</h4>
+      <div id="scnOptions"></div>
+    </div>
+    <div class="small" style="margin-top:10px">Tip: Keep all five outcomes in the green band.</div>
+  </div>
+
+  <!-- RIGHT: Outcomes, Stakeholders, Story Log -->
+  <div class="rightcol">
+    <div class="card">
+      <h3>Outcomes</h3>
+      <div id="gauges"></div>
+      <div class="safe small">Green band (28–42 of 50) is healthy. Red/Amber zones may trigger risks.</div>
+    </div>
+
+    <div class="card">
+      <h3>Stakeholders</h3>
+      <div id="stakeBox" class="stakesGrid"></div>
+    </div>
+
+    <div class="card">
+      <h3>Story Log</h3>
+      <div id="log"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Shock banner -->
+<div class="banner" id="shockBanner">⚡ <b>Breaking:</b> <span id="shockText">—</span></div>
+
+<!-- Prologue modal -->
+<div class="modal" id="prologue">
+  <div class="sheet">
+    <h2>🇸🇬 You are the Prime Minister of Singapore</h2>
+    <p class="small">Every policy has trade-offs. Your task is to keep Singapore stable and fair across five outcomes while navigating different voices.</p>
+    <hr class="sep">
+    <h3>How to play</h3>
+    <ul class="small">
+      <li>There are <b>9 scenarios</b>. Choose <b>one policy</b> each time.</li>
+      <li>Effects apply immediately to the <b>Outcomes</b> and <b>Stakeholders</b>.</li>
+      <li>Two <b>Shocks</b> will occur (one early, one late).</li>
+      <li>Keep outcomes within the green band to avoid risks.</li>
+    </ul>
+    <div class="actions">
+      <button class="btn" id="skipTour">Skip Tour</button>
+      <button class="btn primary" id="startTour">Start Tour</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tour modal -->
+<div class="modal" id="tour">
+  <div class="sheet">
+    <h2>Quick Tour</h2>
+    <div id="tourBody" class="small">—</div>
+    <div class="actions">
+      <button class="btn" id="tourPrev">Back</button>
+      <div>
+        <button class="btn" id="tourSkip">Skip</button>
+        <button class="btn primary" id="tourNext">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Aftermath modal -->
+<div class="modal" id="aftermath">
+  <div class="sheet">
+    <h2 id="amTitle">—</h2>
+    <p id="amToday" class="small">—</p>
+    <div id="amImpacts" class="row small"></div>
+    <div id="amVoices" class="small" style="margin-top:8px"></div>
+    <div class="actions">
+      <div></div>
+      <button class="btn primary" id="amContinue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========= CONFIG (50-point scale) ========= */
+const MAX=50, MIN=0;
+const IMPACT = 3.0;   // ⬆️ stronger, visible on 50-scale
+const START = {trust:30, budget:30, wellbeing:30, environment:30, harmony:30}; // baseline 30/50
+const ATTR = {
+  trust: {emoji:"👥", label:"Trust in Government", full:"Trust in Government — citizens’ support and confidence in leadership."},
+  budget:{emoji:"💰", label:"Government Budget", full:"Government Budget — money available to develop the country and maintain services."},
+  wellbeing:{emoji:"🏠", label:"Citizens’ Well-Being", full:"Citizens’ Well-Being — jobs, housing, prices and healthcare affecting daily life."},
+  environment:{emoji:"🌳", label:"Environmental Stewardship", full:"Environmental Stewardship — care for and impact on Singapore’s natural environment."},
+  harmony:{emoji:"🤝", label:"Harmony, Cohesion & Culture", full:"Harmony, Cohesion & Culture — peaceful relations among Singapore’s diverse communities."}
+};
+
+/* Stakeholders (5) + hover descriptions */
+const STAKE = [
+  {key:"families", label:"👪 Families (incl. low-income)", tip:"Household budgets, childcare/caregiving needs, affordable essentials."},
+  {key:"working",  label:"👨‍💼 Working Adults", tip:"Employment, wages, workplace flexibility, cost of commuting."},
+  {key:"youth",    label:"🧑‍🎓 Youth & Students", tip:"Education opportunities, entry-level jobs, future skills."},
+  {key:"business", label:"🏢 SMEs & Businesses", tip:"Manpower availability, costs, regulation, reliability of services."},
+  {key:"civic",    label:"🛡️🌿 Privacy & Environmental Advocates", tip:"Data protection, civil liberties, and environmental safeguards."}
+];
+
+/* Shocks (guarantee 2) */
+const SHOCKS = [
+  {title:"Global Recession", text:"Exports fall; hiring freezes spread.",
+   delta:{trust:-2,budget:-3,wellbeing:-3,environment:0,harmony:-1},
+   sh:{business:-4,working:-2,families:-2,youth:-2}},
+  {title:"Energy Price Spike", text:"Regional disruptions raise electricity costs.",
+   delta:{trust:-1,budget:-2,wellbeing:-2,environment:-1,harmony:0},
+   sh:{business:-3,families:-2,working:-2}},
+  {title:"Major Cyber Attack", text:"Data breach undermines confidence.",
+   delta:{trust:-3,budget:-1,wellbeing:-2,environment:0,harmony:-1},
+   sh:{business:-2,youth:-1,civic:-3}},
+  {title:"MRT Breakdown", text:"A long disruption angers commuters.",
+   delta:{trust:-2,budget:0,wellbeing:-3,environment:0,harmony:-1},
+   sh:{families:-2,working:-2,youth:-2}},
+  {title:"Haze Returns", text:"Transboundary pollution spikes PSI.",
+   delta:{trust:-1,budget:-1,wellbeing:-2,environment:-4,harmony:-1},
+   sh:{civic:-3,families:-1}}
+];
+
+/* Scenarios (9) — AI scenario made specific */
+const scenarios = [
+  /* 1 */{
+    id:"hawker", title:"Hawker Centre Rentals", complexity:"Low",
+    context:"Hawker culture is central to our identity. Recently, some stalls closed due to high rents, while consumers complain about rising food prices.",
+    voices:[
+      ["Families","“Affordable meals help our monthly budgets.”"],
+      ["SMEs & Businesses","“High costs reduce variety and quality.”"],
+      ["Families (incl. low-income)","“Every dollar we save matters.”"]
+    ],
+    options:[
+      {label:"Impose rental cap",
+       desc:"Create a legal cap (maximum amount) on stall rentals.",
+       delta:{trust:+2,budget:-2,wellbeing:+3,environment:0,harmony:+1},
+       sh:{families:+3,business:-2}},
+      {label:"Let the market decide",
+       desc:"No controls on rent ; operators and stallholders negotiate freely.",
+       delta:{trust:-1,budget:+2,wellbeing:-2,environment:0,harmony:-1},
+       sh:{business:+2,families:-1}},
+      {label:"Targeted rental rebates (discounts)",
+       desc:"Government funds rebates for stalls selling essential dishes.",
+       delta:{trust:+1,budget:-1,wellbeing:+2,environment:0,harmony:+1},
+       sh:{families:+2}}
+    ],
+    aftermath:{
+      impose:{headline:"Hawker Rentals Capped; Prices Stabilise",
+              today:"Prices stabilise at many centres; some operators warn of thinner margins.",
+              voices:["👪 Families: “Lunches feel affordable again.”","🏢 SMEs: “Margins are tight.”"]},
+      market:{headline:"Hawker Rentals Liberalised",
+              today:"Greater flexibility, but some stalls raise prices or exit.",
+              voices:["👪 Families: “Costs creep up.”","🏢 SMEs: “Freedom to set fair rents.”"]},
+      rebate:{headline:"Rebates Target Essentials",
+              today:"Cheaper staple dishes appear; public appreciates targeted help.",
+              voices:["👪 Families: “Saves a bit daily.”","🛡️🌿 Advocates: “Targeted support over blanket caps.”"]}
+    }
+  },
+  /* 2 */{
+    id:"cpf", title:"CPF: Savings vs Disposable Income", complexity:"Low",
+    context:"CPF is compulsory savings for retirement, housing and healthcare. Higher rates protect future needs but reduce take-home pay today.",
+    voices:[
+      ["Elder care advocates","“Retirement adequacy matters.”"],
+      ["Youth & Students","“We need cash flow now.”"],
+      ["Families","“Budgets are tight.”"]
+    ],
+    options:[
+      {label:"Keep rates high", desc:"Maintain current contribution rates for security.",
+       delta:{trust:-1,budget:0,wellbeing:+1,environment:0,harmony:+1},
+       sh:{families:-1,working:-1}},
+      {label:"Reduce rates", desc:"Lower rates to increase disposable income (take-home pay).",
+       delta:{trust:+1,budget:0,wellbeing:+2,environment:0,harmony:0},
+       sh:{youth:+2,working:+1}},
+      {label:"Flexible bands by income", desc:"Lower rates for lower-income; keep for higher-income (progressive).",
+       delta:{trust:+1,budget:0,wellbeing:+1,environment:0,harmony:+1},
+       sh:{families:+2,working:+1}}
+    ],
+    aftermath:{
+      keep:{headline:"CPF Rates Maintained",today:"Security emphasised over spending today.",voices:["👪 Families: “Harder month to month.”","🧑‍🎓 Youth: “We need cash now.”"]},
+      reduce:{headline:"CPF Rates Reduced",today:"Pay packets rise; debate over future adequacy.",voices:["👨‍💼 Working Adults: “Helps with bills.”","Advocates: “Plan for retirement too.”"]},
+      bands:{headline:"Progressive CPF Bands",today:"Lower-income get relief; long-term security kept for others.",voices:["👪 Families: “Feels fairer.”","🛡️🌿 Advocates: “Targeted and balanced.”"]}
+    }
+  },
+  /* 3 */{
+    id:"coe", title:"COE for Cars", complexity:"Low",
+    context:"COE controls vehicle numbers to cut congestion and emissions. High COE keeps roads clear but makes cars expensive.",
+    voices:[
+      ["Families","“A car helps caregiving and kids’ schedules.”"],
+      ["Environmental advocates","“Fewer cars protect air quality.”"],
+      ["Business","“Transport costs affect services.”"]
+    ],
+    options:[
+      {label:"Raise COE", desc:"Reduce vehicle quota to slow car growth.",
+       delta:{trust:-1,budget:+2,wellbeing:-1,environment:+3,harmony:0},
+       sh:{families:-2,civic:+2,business:-1}},
+      {label:"Lower COE", desc:"Increase quota to ease prices.",
+       delta:{trust:+1,budget:-2,wellbeing:+2,environment:-3,harmony:0},
+       sh:{families:+2,civic:-3}},
+      {label:"Exemptions for special needs", desc:"Keep quota; targeted support for disability/family-care.",
+       delta:{trust:+1,budget:-1,wellbeing:+1,environment:+1,harmony:+1},
+       sh:{families:+2,civic:+1}}
+    ],
+    aftermath:{
+      raise:{headline:"COE Raised to Curb Congestion",today:"Roads stay clear; car dreams delayed for some families.",voices:["👪 Families: “Out of reach.”","🌿 Advocates: “Cleaner air ahead.”"]},
+      lower:{headline:"COE Lowered to Ease Costs",today:"Some relief for buyers; traffic and emissions tick up.",voices:["👪 Families: “Finally possible.”","🌿 Advocates: “Watch pollution.”"]},
+      aid:{headline:"Targeted COE Support",today:"Special-needs cases get help; overall car numbers steady.",voices:["👪 Families: “Fairer for caregivers.”","🏢 SMEs: “Stability helps planning.”"]}
+    }
+  },
+  /* 4 */{
+    id:"foreign", title:"Foreign Labour Policy", complexity:"Moderate",
+    context:"Foreign manpower supports growth. Too open may hurt local wages; too tight may slow businesses and services.",
+    voices:[
+      ["Business","“We need manpower to scale.”"],
+      ["Youth","“Protect entry-level jobs.”"],
+      ["Community leaders","“Integration matters.”"]
+    ],
+    options:[
+      {label:"Easier permits", desc:"Lower barriers to hire foreign workers quickly.",
+       delta:{trust:-1,budget:+1,wellbeing:0,environment:0,harmony:-2},
+       sh:{business:+3,youth:-2,working:-1}},
+      {label:"Tighten inflow", desc:"Raise requirements and reduce quotas.",
+       delta:{trust:+1,budget:-1,wellbeing:0,environment:0,harmony:+2},
+       sh:{youth:+2,business:-2}},
+      {label:"Quotas + upskill locals", desc:"Controlled inflow + training (SkillsFuture).",
+       delta:{trust:+1,budget:-1,wellbeing:+1,environment:0,harmony:+1},
+       sh:{business:+1,youth:+1,working:+1}}
+    ],
+    aftermath:{
+      open:{headline:"Work Passes Eased",today:"Hiring speeds up; locals worry about job competition.",voices:["🏢 SMEs: “We can fill roles.”","🧑‍🎓 Youth: “Protect entry jobs.”"]},
+      tight:{headline:"Inflow Tightened",today:"Firms slow expansion; wages for locals may firm up.",voices:["🧑‍🎓 Youth: “More chances for us.”","🏢 SMEs: “Harder to expand.”"]},
+      blend:{headline:"Balanced Quotas & Upskilling",today:"Training ramps up while firms maintain capacity.",voices:["👨‍💼 Working Adults: “Skills help.”","🏢 SMEs: “Still able to plan.”"]}
+    }
+  },
+  /* 5 */{
+    id:"housing", title:"Housing vs Nature", complexity:"Moderate",
+    context:"New flats relieve housing pressure, but clearing forests harms biodiversity and green spaces.",
+    voices:[
+      ["Families","“We need affordable homes near work and schools.”"],
+      ["Environmental advocates","“Once forests are gone, they’re gone.”"]
+    ],
+    options:[
+      {label:"Build more HDB (deforest)", desc:"Use more land for flats to cut waiting time.",
+       delta:{trust:+1,budget:+1,wellbeing:+2,environment:-3,harmony:+1},
+       sh:{families:+2,civic:-3}},
+      {label:"Protect nature (limit building)", desc:"Preserve forests; slower housing rollout.",
+       delta:{trust:0,budget:-1,wellbeing:0,environment:+3,harmony:+1},
+       sh:{civic:+3,families:-1}},
+      {label:"Mixed use + green corridors", desc:"Selective build with wildlife corridors.",
+       delta:{trust:+1,budget:0,wellbeing:+1,environment:+1,harmony:+1},
+       sh:{families:+1,civic:+1}}
+    ],
+    aftermath:{
+      build:{headline:"Land Cleared for New Estates",today:"More flats planned; green groups voice concern.",voices:["👪 Families: “Shorter wait!”","🌿 Advocates: “Protect key habitats.”"]},
+      protect:{headline:"Forest Areas Protected",today:"Nature preserved; housing queues grow a little.",voices:["🌿 Advocates: “Biodiversity matters.”","👪 Families: “Still waiting.”"]},
+      blend:{headline:"Green Corridors in New Town",today:"A compromise design links habitats while adding homes.",voices:["👪 Families: “Homes coming.”","🌿 Advocates: “Better balance.”"]}
+    }
+  },
+  /* 6 */{
+    id:"bilingual", title:"Bilingual Policy (English & Mother Tongue)", complexity:"Moderate",
+    context:"English links us to the world; Mother Tongues maintain culture and identity. Balancing both takes support.",
+    voices:[
+      ["Youth","“Work and university value English.”"],
+      ["Families","“Home and heritage matter.”"],
+      ["Community leaders","“Shared identity supports cohesion.”"]
+    ],
+    options:[
+      {label:"Emphasise English", desc:"More time/resources to English across subjects.",
+       delta:{trust:+1,budget:0,wellbeing:0,environment:0,harmony:-2},
+       sh:{youth:+2,civic:-1}},
+      {label:"Emphasise Mother Tongues", desc:"Increase lesson time/support for MT languages.",
+       delta:{trust:-1,budget:0,wellbeing:0,environment:0,harmony:+2},
+       sh:{families:+1}},
+      {label:"Balance with MT support", desc:"Keep balance; add help (remedial/ICT) for weaker MT.",
+       delta:{trust:+1,budget:-1,wellbeing:+1,environment:0,harmony:+1},
+       sh:{families:+1,youth:+1}}
+    ],
+    aftermath:{
+      eng:{headline:"English Emphasis",today:"Fluency targets rise; identity groups urge culture support.",voices:["🧑‍🎓 Youth: “Helps for uni.”","Community: “Don’t forget roots.”"]},
+      mt:{headline:"Mother Tongues Emphasis",today:"Cultural literacy grows; some worry about global fit.",voices:["Families: “Heritage matters.”","Youth: “Balance global needs.”"]},
+      bal:{headline:"Balanced Approach with Support",today:"Extra help lifts weaker MT students while keeping English strong.",voices:["Families: “Feels fair.”","Teachers: “Targeted support works.”"]}
+    }
+  },
+  /* 7 */{
+    id:"eip", title:"Ethnic Integration Policy (HDB)", complexity:"High",
+    context:"EIP prevents racial enclaves to support everyday mixing, but can constrain buying/selling for some households.",
+    voices:[
+      ["Families","“Let us live near our parents.”"],
+      ["Community leaders","“Mixed estates reduce prejudice.”"]
+    ],
+    options:[
+      {label:"Keep strict quotas", desc:"Maintain ethnic caps for blocks/precincts.",
+       delta:{trust:-1,budget:0,wellbeing:-1,environment:0,harmony:+3},
+       sh:{families:-1}},
+      {label:"Loosen rules", desc:"Relax caps to increase choice (freedom).",
+       delta:{trust:+1,budget:0,wellbeing:+2,environment:0,harmony:-2},
+       sh:{families:+2}},
+      {label:"Compensate affected sellers", desc:"Grants to households disadvantaged by EIP.",
+       delta:{trust:+1,budget:-2,wellbeing:+1,environment:0,harmony:+2},
+       sh:{families:+1}}
+    ],
+    aftermath:{
+      keep:{headline:"EIP Quotas Maintained",today:"Quotas stay; some sellers still face constraints.",voices:["Community: “Cohesion first.”","👪 Families: “We need flexibility.”"]},
+      loose:{headline:"EIP Rules Loosened",today:"Choice expands; concerns about enclaves resurface.",voices:["👪 Families: “Easier to buy.”","Leaders: “Mind long-term cohesion.”"]},
+      grant:{headline:"EIP Grant Introduced",today:"Help for affected households; policy goal preserved.",voices:["👪 Families: “Fairer now.”","Community: “Cohesion kept.”"]}
+    }
+  },
+  /* 8 */{
+    id:"digital", title:"Smart Nation & AI Governance", complexity:"High",
+    context:"Sensors and AI can improve services. Without guardrails, privacy (freedom) and bias can harm trust.",
+    voices:[
+      ["Privacy advocates","“Use consent, data minimisation and true independent audits.”"],
+      ["Business","“Automation reduces queues and boosts productivity.”"]
+    ],
+    options:[
+      {label:"Rapid AI rollout",
+       desc:"Citywide deployment incl. CCTV+face analytics, automated enforcement, cross-agency data sharing; pilot predictive policing.",
+       delta:{trust:-2,budget:-2,wellbeing:+3,environment:0,harmony:-2},
+       sh:{business:+1,civic:-3}},
+      {label:"Cautious pilots + oversight",
+       desc:"Pilot in HDB e-services/clinics; publish bias/accuracy audits; human-in-the-loop; independent regulator; appeal routes.",
+       delta:{trust:+5,budget:-2,wellbeing:+3,environment:0,harmony:+3},
+       sh:{civic:+3,business:+0}},
+      {label:"Pause & upskill first",
+       desc:"SkillsFuture AI modules; govtech sandboxes with guardrails; set explainability and audit standards before scale.",
+       delta:{trust:+3,budget:-2,wellbeing:+3,environment:0,harmony:+3},
+       sh:{working:+2,youth:+1}}
+    ],
+    aftermath:{
+      fast:{headline:"AI Rolled Out Fast",
+            today:"Services speed up. Concerns rise about mass data sharing, automated fines and errors without clear appeal.",
+            voices:["🏢 SMEs: “Productivity up.”","🛡️ Privacy: “Need legal limits, audits and an appeal tribunal.”"]},
+      careful:{headline:"AI Pilots Under Oversight",
+               today:"Pilots reduce queues. Public dashboards show error rates and audit results; an independent office handles complaints.",
+               voices:["🛡️ Privacy: “Audits + consent build trust.”","Citizens: “Shorter clinic wait times already.”"]},
+      pause:{headline:"Upskilling Before Scale",
+             today:"Workforce training expands; small, supervised pilots continue with strict guardrails.",
+             voices:["👨‍💼 Working Adults: “Skills for future jobs.”","🛡️ Privacy: “Good to set standards first.”"]}
+    }
+  },
+  /* 9 */{
+    id:"ns", title:"Deterrence & National Service", complexity:"Very High",
+    context:"A strong SAF deters threats. NS builds a shared stake but takes time from work/study and costs money.",
+    voices:[
+      ["Families","“Two years is a big commitment.”"],
+      ["Youth","“University and career timelines shift.”"],
+      ["Community leaders","“Shared duty unites citizens.”"],
+      ["Business","“Manpower opportunity cost is real.”"]
+    ],
+    options:[
+      {label:"Status quo", desc:"Maintain duration and coverage.",
+       delta:{trust:+1,budget:-1,wellbeing:-1,environment:0,harmony:+2},
+       sh:{youth:-1,working:-1}},
+      {label:"Shorten NS + boost tech", desc:"Reduce duration; invest in advanced tech.",
+       delta:{trust:+1,budget:-2,wellbeing:+1,environment:0,harmony:+1},
+       sh:{youth:+1,working:+1,business:+1}},
+      {label:"Keep duration; expand benefits", desc:"More education/employment benefits.",
+       delta:{trust:+2,budget:-2,wellbeing:+1,environment:0,harmony:+2},
+       sh:{families:+1,youth:+1}}
+    ],
+    aftermath:{
+      status:{headline:"NS Maintained",today:"Commitment continues; cohesion signals remain strong.",voices:["Community: “Shared duty matters.”","👨‍💼 Working: “Time cost remains.”"]},
+      short:{headline:"NS Shortened; Tech Boosted",today:"Readiness rests more on technology; fewer disruptions.",voices:["🧑‍🎓 Youth: “Helps career plans.”","Defence: “Capabilities modernised.”"]},
+      benefits:{headline:"NS Benefits Expanded",today:"New pathways reduce opportunity costs.",voices:["Families: “More support now.”","Businesses: “Skills translate back to work.”"]}
+    }
+  }
+];
+
+/* ========= STATE ========= */
+let state = {...START};
+let SH = Object.fromEntries(STAKE.map(s=>[s.key,30])); // baseline 30/50
+let scnIdx = 0; // 0..8
+let shocksFired = 0;
+const forceShocksAt = new Set([2,6]); // fire around 3rd and 7th scenario
+
+/* ========= DOM ========= */
+const gaugesEl = document.getElementById('gauges');
+const stakeBox = document.getElementById('stakeBox');
+const logEl = document.getElementById('log');
+const scnIndexEl = document.getElementById('scnIndex');
+const scnTotalEl = document.getElementById('scnTotal');
+const scnTitleEl = document.getElementById('scnTitle');
+const scnContextEl = document.getElementById('scnContext');
+const scnVoicesEl = document.getElementById('scnVoices');
+const scnOptionsEl = document.getElementById('scnOptions');
+const complexityBadge = document.getElementById('complexityBadge');
+
+/* ========= UI BUILDERS ========= */
+function pct(v){ return (Math.max(MIN,Math.min(MAX,v))/MAX)*100; }
+
+function makeGaugeRow(key){
+  const {emoji,label,full}=ATTR[key];
+  const row=document.createElement('div'); row.className='gauge';
+  row.innerHTML=`
+    <div class="glabel"><div class="name"><span>${emoji}</span><span class="info" title="${full}">${label}</span></div><div><span id="${key}Val">${state[key]}</span>/50</div></div>
+    <div class="track"><div class="fill" id="${key}Bar" style="width:${pct(state[key])}%"></div><div class="delta small" id="${key}Delta"></div></div>
+  `;
+  return row;
+}
+function renderGauges(){
+  gaugesEl.innerHTML='';
+  for(const k of Object.keys(ATTR)){ gaugesEl.appendChild(makeGaugeRow(k)); }
+}
+function updateGauge(key, change){
+  const v = Math.max(MIN, Math.min(MAX, state[key]));
+  document.getElementById(`${key}Bar`).style.width = pct(v)+'%';
+  document.getElementById(`${key}Val`).textContent = v;
+  const d = document.getElementById(`${key}Delta`);
+  if(change){ d.textContent = (change>0? '↑+'+change: '↓'+Math.abs(change)); setTimeout(()=>d.textContent='',1500); }
+}
+function updateAllGauges(changes){
+  for(const k of Object.keys(ATTR)){ updateGauge(k, changes?.[k] || 0); }
+}
+
+/* Stakeholders (vertical) */
+function renderStake(){
+  stakeBox.innerHTML = STAKE.map(s=>{
+    const v=SH[s.key]; const warn=v<15; // 15/50 threshold
+    return `<div class="stakeV" title="${s.tip}">
+      <div class="vbar"><div class="vfill" style="height:${pct(v)}%"></div></div>
+      <div class="sval">${v}/50</div>
+      <div class="slabel">${s.label}</div>
+      <div class="pill ${warn?'warn':'ok'}">${warn?'':'OK'}</div>
+    </div>`;
+  }).join('');
+}
+function log(head, meta){
+  const el=document.createElement('div'); el.className='entry';
+  el.innerHTML = `<div class="t">${head}</div>${meta?`<div class="m">${meta}</div>`:''}`;
+  logEl.prepend(el);
+}
+
+/* ========= SCENARIO RENDER ========= */
+function setHeader(){ scnIndexEl.textContent = (scnIdx+1); scnTotalEl.textContent = scenarios.length; }
+function renderScenario(){
+  const sc=scenarios[scnIdx];
+  setHeader();
+  scnTitleEl.textContent=sc.title;
+  scnContextEl.textContent=sc.context;
+  complexityBadge.textContent = `🧩 Complexity: ${sc.complexity}`;
+  scnVoicesEl.innerHTML = sc.voices.map(v=>`<li><b>${v[0]}:</b> <em>${v[1]}</em></li>`).join('');
+  scnOptionsEl.innerHTML = sc.options.map((o,i)=>optionButtonHTML(sc,i)).join('');
+}
+function optionButtonHTML(sc, idx){
+  const o=sc.options[idx];
+  const del = Object.entries(o.delta).map(([k,v])=>{
+    const e=ATTR[k].emoji; const val=Math.round(v*IMPACT);
+    return `${e} ${val>0?'+':''}${val}`;
+  }).join(' · ');
+  return `<button class="option" onclick="choose(${idx})">
+    <div class="title"><b>${o.label}</b></div>
+    <div class="desc small">${o.desc}</div>
+    <div class="impacts">${del}</div>
+  </button>`;
+}
+
+/* ========= EFFECTS ========= */
+function applyDelta(delta){
+  const applied={};
+  for(const [k,v] of Object.entries(delta)){
+    const add = Math.round(v*IMPACT);
+    state[k] = Math.max(MIN, Math.min(MAX, state[k]+add));
+    applied[k]=add;
+  }
+  updateAllGauges(applied);
+  return applied;
+}
+function applyStakeShift(shift){
+  if(!shift) return;
+  for(const [k,v] of Object.entries(shift)){
+    SH[k]=Math.max(MIN,Math.min(MAX,SH[k]+Math.round(v*IMPACT)));
+  }
+  renderStake();
+  // triggers
+  let any=false;
+  for(const s of STAKE){
+    if(SH[s.key]<15){ applyDelta({trust:-2,harmony:-1}); log(`📣 Outcry from ${s.label}`); any=true; }
+    if(SH[s.key]>43){ applyDelta({trust:+1}); log(`👏 Strong support from ${s.label}`); any=true; }
+  }
+  if(any) renderStake();
+}
+
+/* ========= AFTERMATH ========= */
+const amEl = document.getElementById('aftermath');
+const amTitle = document.getElementById('amTitle');
+const amToday = document.getElementById('amToday');
+const amImpacts = document.getElementById('amImpacts');
+const amVoices = document.getElementById('amVoices');
+document.getElementById('amContinue').onclick = ()=>{ amEl.style.display='none'; nextStep(); };
+
+function showAftermath(headline, today, impacts, voices){
+  amTitle.textContent=headline;
+  amToday.textContent=today||'';
+  amImpacts.innerHTML = Object.keys(ATTR).map(k=>{
+    const val=impacts[k]||0; if(!val) return '';
+    return `<span class="badge">${ATTR[k].emoji} <b>${ATTR[k].label}</b> ${val>0?'+':''}${val}</span>`;
+  }).join('');
+  amVoices.innerHTML = (voices||[]).map(v=>`<div>• ${v}</div>`).join('');
+  amEl.style.display='flex';
+}
+
+/* ========= CHOICE HANDLER ========= */
+window.choose = function(optIdx){
+  const sc=scenarios[scnIdx]; const opt=sc.options[optIdx];
+  const applied = applyDelta(opt.delta);
+  applyStakeShift(opt.sh);
+  let af;
+  if(sc.id==="hawker"){ af = optIdx===0?sc.aftermath.impose:optIdx===1?sc.aftermath.market:sc.aftermath.rebate; }
+  if(sc.id==="cpf"){ af = optIdx===0?sc.aftermath.keep:optIdx===1?sc.aftermath.reduce:sc.aftermath.bands; }
+  if(sc.id==="coe"){ af = optIdx===0?sc.aftermath.raise:optIdx===1?sc.aftermath.lower:sc.aftermath.aid; }
+  if(sc.id==="foreign"){ af = optIdx===0?sc.aftermath.open:optIdx===1?sc.aftermath.tight:sc.aftermath.blend; }
+  if(sc.id==="housing"){ af = optIdx===0?sc.aftermath.build:optIdx===1?sc.aftermath.protect:sc.aftermath.blend; }
+  if(sc.id==="bilingual"){ af = optIdx===0?sc.aftermath.eng:optIdx===1?sc.aftermath.mt:sc.aftermath.bal; }
+  if(sc.id==="eip"){ af = optIdx===0?sc.aftermath.keep:optIdx===1?sc.aftermath.loose:sc.aftermath.grant; }
+  if(sc.id==="digital"){ af = optIdx===0?sc.aftermath.fast:optIdx===1?sc.aftermath.careful:sc.aftermath.pause; }
+  if(sc.id==="ns"){ af = optIdx===0?sc.aftermath.status:optIdx===1?sc.aftermath.short:sc.aftermath.benefits; }
+  log(af.headline);
+  showAftermath(af.headline, af.today, applied, af.voices);
+}
+
+/* ========= SHOCKS ========= */
+const banner=document.getElementById('shockBanner');
+function fireShock(){
+  const s = SHOCKS[Math.floor(Math.random()*SHOCKS.length)];
+  banner.style.display='block'; document.getElementById('shockText').textContent=s.title; setTimeout(()=>banner.style.display='none',1600);
+  const applied = applyDelta(s.delta); applyStakeShift(s.sh);
+  log(`⚡ ${s.title}`, s.text);
+  showAftermath(`⚡ ${s.title}`, s.text, applied, [
+    "Public reactions are mixed across groups.",
+    "Officials announce mitigation measures and monitoring."
+  ]);
+  shocksFired++;
+}
+
+/* ========= PROGRESSION ========= */
+function nextStep(){
+  // force early/late shocks
+  if(forceShocksAt.has(scnIdx) && shocksFired < 1){ fireShock(); return; }
+  if(forceShocksAt.has(scnIdx) && shocksFired < 2 && scnIdx>=6){ fireShock(); return; }
+
+  scnIdx++;
+  if(scnIdx >= scenarios.length){ return endGame(); }
+  renderScenario();
+}
+
+/* ========= ENDINGS (scaled thresholds) ========= */
+function endGame(){
+  const t=state.trust, b=state.budget, w=state.wellbeing, e=state.environment, h=state.harmony;
+  let head="Balanced Singapore";
+  let note="Steady governance, broad support, and manageable trade-offs.";
+  if(t<20){ head="Trust Crisis"; note="Citizens’ confidence fell after several decisions. Consider transparency and inclusion."; }
+  else if(b<18){ head="Budget Squeeze"; note="Heavy spending without revenue room constrained national capacity."; }
+  else if(w<20){ head="Quality-of-Life Crunch"; note="Prices, housing, or services weighed on daily life."; }
+  else if(h<20){ head="Social Fractures"; note="Community tensions grew; cohesion needs rebuilding."; }
+  else if(e<18){ head="Green Backlash"; note="Environmental losses triggered public concern."; }
+
+  const ep = document.getElementById('aftermath');
+  document.getElementById('amTitle').textContent = `🏁 ${head}`;
+  document.getElementById('amToday').textContent = note;
+  document.getElementById('amImpacts').innerHTML = Object.keys(ATTR).map(k=>`<span class="badge">${ATTR[k].emoji} <b>${ATTR[k].label}</b> ${state[k]}/50</span>`).join('');
+  document.getElementById('amVoices').innerHTML = `<div class="small">Reflection: Which groups bore most costs? What would you change next term?</div>`;
+  ep.style.display='flex';
+  document.getElementById('amContinue').textContent = "Play Again";
+  document.getElementById('amContinue').onclick = ()=>location.reload();
+}
+
+/* ========= INIT ========= */
+function init(){ renderGauges(); renderStake(); renderScenario(); setHeader(); document.getElementById('prologue').style.display='flex'; }
+init();
+
+/* ========= PROLOGUE & TOUR ========= */
+const tour = document.getElementById('tour');
+const tourBody = document.getElementById('tourBody');
+const steps = [
+  "📜 <b>Scenario</b> (left): Read the context, consider the voices, then choose <b>one</b> policy.",
+  "📊 <b>Outcomes</b> (top-right): Five gauges show national results (0–50). Keep them in the green band (28–42).",
+  "👥 <b>Stakeholders</b> (mid-right): Vertical bars show group sentiment; hover for a quick definition.",
+  "📰 <b>Story Log</b>: Headlines for what happened. After each choice, a short <b>Aftermath</b> card appears."
+];
+let stepIdx=0;
+function showStep(){ tourBody.innerHTML = `<div class="small">${steps[stepIdx]}</div>`; }
+document.getElementById('startTour').onclick = ()=>{ document.getElementById('prologue').style.display='none'; tour.style.display='flex'; stepIdx=0; showStep(); };
+document.getElementById('skipTour').onclick = ()=>{ document.getElementById('prologue').style.display='none'; };
+document.getElementById('tourPrev').onclick = ()=>{ stepIdx=Math.max(0,stepIdx-1); showStep(); };
+document.getElementById('tourNext').onclick = ()=>{ if(stepIdx<steps.length-1){ stepIdx++; showStep(); } else { tour.style.display='none'; } };
+document.getElementById('tourSkip').onclick = ()=>{ tour.style.display='none'; };
+</script>
+</body>
+</html>
