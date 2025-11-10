@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nanyang Passage — Goh Pek Teck</title>
+<title> Journey to Singapore - Choose Your Adventure </title>
 
 <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital,wght@0,400;1,400&family=Spectral:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
 
@@ -26,7 +26,7 @@
 }
 
   /* Wider main area to reduce empty space */
-  main{max-width:1280px;margin:24px auto;padding:0 16px 48px;position:relative}
+  main{max-width:1440px;margin:24px auto;padding:0 16px 48px;position:relative}
 
   /* === Top-right HUD (horizontal row of tall bars) === */
   .tophud{
@@ -89,6 +89,87 @@
     .media img{width:80%;max-width:80%}
     .intro-media img{width:55%;max-width:320px}
   }
+
+/* === DESKTOP/WIDE: use the space with a side-by-side layout === */
+@media (min-width: 1200px){
+  /* turn the card into a 2-col grid without changing HTML */
+  .card{
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    grid-template-areas:
+      "img text"
+      "img choices"
+      "img footer";
+    align-items: start;
+  }
+  .media{ grid-area: img; border-right: 1px solid #eceff3; border-bottom: none; height: 100%; }
+  .scene{ grid-area: text; }
+  #choices{ grid-area: choices; }
+  .footer{ grid-area: footer; }
+  /* slightly bigger image so the left column feels filled */
+  .media img{ width: 95%; max-width: 1100px; }
+  /* keep the HUD pinned near the right edge of the centered main column */
+  .tophud{ right: max(16px, calc(50vw - 700px + 16px)); top: 72px; }
+}
+
+/* === MOBILE/NARROW: convert HUD to a compact bottom bar === */
+@media (max-width: 700px){
+  /* give space so the bottom HUD never overlaps content */
+  main{ padding-bottom: 96px; }
+
+  /* move HUD to bottom and make it short & horizontal */
+  .tophud{
+    position: fixed;
+    left: 10px; right: 10px; bottom: 10px; top: auto;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    padding: 8px 10px; border-radius: 12px; z-index: 40;
+    backdrop-filter: blur(6px);
+  }
+  .vstack{ min-width: 0; gap: 4px; }
+  .vbar{ width: 16px; height: 44px; border-radius: 8px; }
+  .vlabel{ font-size: 0.95rem; }
+  .vname{ font-size: 0.72rem; }
+
+  /* make images a touch larger on phones to reduce perceived margins */
+  .media img{ width: 92%; max-width: 92%; }
+  .intro-media img{ width: 70%; max-width: 360px; }
+}
+
+/* === Keep images from pushing choices off-screen === */
+@media (max-width: 700px){
+  /* Ensure the page has room for the bottom HUD + choices */
+  main{ padding-bottom: 120px; }
+
+  /* Constrain scene images on phones */
+  .media{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .media img{
+    /* Key lines: cap image height to a portion of the screen */
+    max-height: 58vh;     /* tweak 52–62vh to taste */
+    width: auto;          /* preserve aspect ratio */
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;  /* never crop */
+  }
+
+  /* Give a little breathing room above options */
+  #choices{ margin-top: 10px; }
+}
+
+/* Optional: also cap on desktops so ultratall images don't dominate */
+@media (min-width: 700px){
+  .media img{
+    max-height: 80vh;     /* image won’t exceed 80% of viewport height */
+    height: auto;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+  }
+}
+
 </style>
 </head>
 <body>
