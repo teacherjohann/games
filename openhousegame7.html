@@ -78,7 +78,16 @@
 
   /* Scene */
   .scene{ display:flex; flex-direction:column; }
-  .banner{ width:100%; height: 260px; background:#ccc; object-fit:cover; object-position:center; border-bottom:1px solid var(--accent); }
+ .banner{
+  width: 100%;
+  height: auto;           /* let the image decide its height */
+  max-height: 480px;      /* optional safety limit; can remove */
+  background:#ccc;
+  object-fit: contain;    /* show full image, no crop */
+  object-position: center;
+  border-bottom:1px solid var(--accent);
+}
+
   .content{ padding: 18px clamp(16px, 3vw, 28px) 24px; }
 
   /* NEW: Prologue logo strip */
