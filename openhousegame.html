@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Beatty Open House — Choose Your Own Beatty Journey</title>
+<style>
+  :root{
+    /* OFFICIAL BEATTY PALETTE */
+    --beatty-navy:#000c53;
+    --beatty-gold:#ffe200;
+    --beatty-red:#ec3237;
+    --beatty-black:#00072a;
+    --beatty-white:#ffffff;
+
+    /* Backgrounds & borders using palette */
+    --bg: linear-gradient(180deg, var(--beatty-black), #020f2e);
+    --panel: var(--beatty-white);
+    --muted:#f5f6fa;
+    --text:#0e1726;
+    --accent:#1e2f7a;
+
+    /* Attribute bar colors */
+    --disc:#3C6EE8;   /* Discipline 💪 (bright blue) */
+    --resi:#ffe200;   /* Resilience 🧱 (Beatty gold) */
+    --empa:#00B3B8;   /* Empathy 👁️ (cyan) */
+    --adap:#1E90FF;   /* Adaptability 🤖 (tech blue) */
+    --mind:#2E7D32;   /* Mindfulness 🧘 (green) */
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+    background: var(--bg);
+    color: var(--text);
+    display:flex; align-items:stretch; justify-content:center;
+  }
+
+  .container{ width:min(980px, 100%); padding: clamp(12px, 2vw, 24px); }
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    overflow:hidden;
+  }
+
+  /* Top HUD with DREAM bars */
+  .hud{
+    background: linear-gradient(90deg, var(--beatty-navy), #15308e);
+    padding: 14px 16px;
+    display:grid; grid-template-columns:repeat(5,1fr); gap:10px;
+  }
+  .stat{
+    background: rgba(255,255,255,.08);
+    border:1px solid rgba(255,255,255,.22);
+    border-radius: 12px;
+    padding: 8px 10px;
+    color:#fff;
+  }
+  .stat-label{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size: 16px; letter-spacing:.2px; opacity:.95;
+    margin-bottom:6px;
+  }
+  .bar{
+    position:relative; height:10px; border-radius:8px;
+    background: rgba(255,255,255,.2); overflow:hidden;
+  }
+  .fill{ position:absolute; left:0; top:0; bottom:0; width:40%; transition: width .6s ease; }
+  .stat.discipline .fill{ background: var(--disc); }
+  .stat.resilience .fill{ background: var(--resi); }
+  .stat.empathy    .fill{ background: var(--empa); }
+  .stat.adapt      .fill{ background: var(--adap); }
+  .stat.mindful    .fill{ background: var(--mind); }
+
+  /* Scene */
+  .scene{ display:flex; flex-direction:column; }
+ .banner{
+  width: 100%;
+  height: auto;           /* let the image decide its height */
+  max-height: 480px;      /* optional safety limit; can remove */
+  background:#ccc;
+  object-fit: contain;    /* show full image, no crop */
+  object-position: center;
+  border-bottom:1px solid var(--accent);
+}
+
+  .content{ padding: 18px clamp(16px, 3vw, 28px) 24px; }
+
+  /* NEW: Prologue logo strip */
+  .prologue-brand{
+    display:none;           /* shown only on prologue via JS */
+    text-align:right;
+    margin-bottom:8px;
+  }
+  .prologue-brand img{
+    height:56px;
+    width:auto;
+  }
+
+  .kicker{ font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#5b6f95; margin:2px 0 8px; font-weight:700; }
+  h1{ margin:6px 0 10px; font-size: clamp(20px, 2.2vw, 28px); color: var(--beatty-navy); }
+  .lead{ font-size: 18px; line-height:1.6; color:#2b3a55; }
+
+  /* NEW: Closing banner image (Epilogue) */
+  .closing-banner{
+  display:none;              /* JS will turn this on in epilogue */
+  width:100%;
+  height:auto;               /* let image decide its height */
+  margin-top:18px;
+  border-radius:12px;
+  border:1px solid #dbe2ee;
+  object-fit:contain;        /* show whole photo, no cropping */
+  max-height:none;           /* remove the 220px cutoff */
+}
+
+
+  /* Choices */
+  .choices{ display:grid; gap:10px; margin-top:16px; grid-template-columns: 1fr; }
+.choice{
+  border:1px solid #dbe2ee;
+  background:var(--muted);
+  border-radius:12px;
+  padding:14px 18px;
+  text-align:left;
+  cursor:pointer;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--beatty-navy);   /* darker blue text */
+  transition: transform .06s ease, background .2s ease, border-color .2s ease;
+}
+
+  .choice:hover{ transform: translateY(-1px); background:#eef3ff; border-color:#c3d5f6; }
+  .choice:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+
+  /* Toast (used for Prologue only) */
+  .toast{
+    position:fixed; left:50%; transform:translateX(-50%);
+    bottom: 20px; background:#0f1b31; color:#fff;
+    padding: 10px 14px; border-radius:10px; border:1px solid #34508e;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    opacity:0; pointer-events:none;
+    transition: opacity .25s ease, bottom .25s ease;
+    font-size:14px; z-index:60;
+  }
+  .toast.show{ opacity:1; bottom: 28px; }
+
+  /* Consequence popup (kept for all non-prologue scenes) */
+  .popup-backdrop{
+    position:fixed; inset:0; background: rgba(0, 7, 42, .55);
+    display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .popup-card{
+    width:min(640px, 92%); background:#0f1b31; color:#e9f0ff;
+    border:1px solid #2e4d8f; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.45);
+    padding:18px 18px 16px;
+  }
+  .popup-title{ margin:0 0 6px; font-size:18px; color:#fffb; letter-spacing:.2px; }
+  .popup-text{ margin:0 0 10px; line-height:1.5; }
+  .popup-stats{ font-size:14px; color:#ffe78b; opacity:.95; margin-bottom:12px; }
+
+  /* NEW: image in popup */
+  .popup-image{
+    display:none;
+    width:100%;
+    margin:10px 0;
+    border-radius:12px;
+    border:1px solid #dbe2ee;
+    object-fit:cover;
+  }
+
+  .popup-button{
+    background: var(--beatty-gold); color:var(--beatty-black); font-weight:700;
+    border:none; padding:10px 14px; border-radius:10px; cursor:pointer;
+  }
+
+  /* Fade transitions */
+  .fade{ opacity:1; transition: opacity .6s ease; }
+  .fade.out{ opacity:0; }
+
+  /* === Confetti (Option B, CSS-based) === */
+  .confetti-piece{
+    position: fixed; top:-10px; width:8px; height:12px;
+    background:#ffe200; opacity:.9; z-index:80;
+    animation: confetti-fall 1500ms linear forwards;
+    transform: rotate(0deg);
+  }
+  @keyframes confetti-fall{
+    0%   { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(110vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="card fade" id="game-card">
+      <!-- HUD -->
+      <div class="hud" id="hud">
+        <div class="stat discipline">
+          <div class="stat-label"><span>Discipline 💪</span><span id="disc-val">4</span></div>
+          <div class="bar"><div class="fill" id="disc-bar" style="width:40%"></div></div>
+        </div>
+        <div class="stat resilience">
+          <div class="stat-label"><span>Resilience 🧱</span><span id="resi-val">4</span></div>
+          <div class="bar"><div class="fill" id="resi-bar" style="width:40%"></div></div>
+        </div>
+        <div class="stat empathy">
+          <div class="stat-label"><span>Empathy 👁️</span><span id="empa-val">4</span></div>
+          <div class="bar"><div class="fill" id="empa-bar" style="width:40%"></div></div>
+        </div>
+        <div class="stat adapt">
+          <div class="stat-label"><span>Adaptability 🤖</span><span id="adap-val">4</span></div>
+          <div class="bar"><div class="fill" id="adap-bar" style="width:40%"></div></div>
+        </div>
+        <div class="stat mindful">
+          <div class="stat-label"><span>Mindfulness 🧘</span><span id="mind-val">4</span></div>
+          <div class="bar"><div class="fill" id="mind-bar" style="width:40%"></div></div>
+        </div>
+      </div>
+
+      <!-- Scene -->
+      <div class="scene" id="scene">
+        <img class="banner" id="banner" src="assets/gate_banner.
+" alt="Placeholder banner: School Gate (assets/gate_banner.jpg)">
+        <div class="content">
+          <!-- NEW: Prologue logo space -->
+          <div class="prologue-brand" id="prologue-brand">
+            <!-- Replace this src with your actual logo file -->
+            <img src="assets/beatty_logo_placeholder.png" alt="Beatty Secondary School logo" id="prologue-logo">
+          </div>
+
+          <div class="kicker" id="kicker">Prologue</div>
+          <h1 id="title">Entering the School Gate</h1>
+          <p class="lead" id="text">
+            As the morning sun cast a glow over the navy-and-gold crest, you step through Beatty Secondary School’s gate, a little nervous, mostly excited. 
+            Today’s Open House is your first taste of life as a Beattyian — choices, challenges, and chances to grow.
+          </p>
+
+          <!-- NEW: Closing banner space (for Epilogue only) -->
+          <img class="closing-banner" id="closing-banner" src="" alt="Closing banner photo">
+
+          <div class="choices" id="choices"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prologue toast -->
+  <div class="toast" id="toast">You’re ready — let’s go!</div>
+
+  <!-- Consequence Popup (kept for non-prologue scenes) -->
+  <div class="popup-backdrop" id="popup">
+    <div class="popup-card">
+      <h3 class="popup-title" id="popup-title">What happens next…</h3>
+      <p class="popup-text" id="popup-text"></p>
+
+      <!-- NEW: optional CCA image -->
+      <img class="popup-image" id="popup-image" src="" alt="CCA photo">
+
+      <div class="popup-stats" id="popup-stats"></div>
+      <button class="popup-button" id="popup-btn">Continue</button>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+   Core State
+----------------------------*/
+const state = {
+  step: 0,
+  maxSteps: 8,
+  pending: null,
+  history: [],
+  stats: { discipline:4, resilience:4, empathy:4, adaptability:4, mindfulness:4 },
+  didConfetti: false
+};
+
+/* ---------------------------
+   Utility helpers
+----------------------------*/
+const clamp = (n,min=0,max=10)=>Math.max(min,Math.min(max,n));
+const percentFrom10 = (n)=> (clamp(n,0,10) * 10) + "%";
+
+function formatEffects10(effects){
+  const labels = {
+    discipline:"Discipline 💪",
+    resilience:"Resilience 🧱",
+    empathy:"Empathy 👁️",
+    adaptability:"Adaptability 🤖",
+    mindfulness:"Mindfulness 🧘"
+  };
+  const parts = [];
+  for(const k of Object.keys(effects||{})){
+    const delta = effects[k];
+    if(!delta) continue;
+    const sign = delta>0?"+":"";
+    parts.push(`${sign}${delta} ${labels[k]}`);
+  }
+  return parts.length ? "Changes: " + parts.join(" · ") : "";
+}
+
+function applyEffects10(effects){
+  for(const key in effects){
+    if(!state.stats.hasOwnProperty(key)) continue;
+    const delta = effects[key];
+    state.stats[key] = clamp(state.stats[key] + delta, 0, 10);
+  }
+  updateHUD();
+}
+
+function updateHUD(){
+  const map = [
+    ["discipline","disc"],
+    ["resilience","resi"],
+    ["empathy","empa"],
+    ["adaptability","adap"],
+    ["mindfulness","mind"]
+  ];
+  map.forEach(([k, id])=>{
+    const valEl = document.getElementById(`${id}-val`);
+    const barEl = document.getElementById(`${id}-bar`);
+    if(valEl) valEl.textContent = state.stats[k];
+    if(barEl) barEl.style.width = percentFrom10(state.stats[k]);
+  });
+}
+
+function fadeSwap(cb){
+  const card = document.getElementById('game-card');
+  card.classList.add('out');
+  setTimeout(()=>{
+    cb && cb();
+    card.classList.remove('out');
+  }, 600);
+}
+
+/* Toast (for Prologue only) */
+const toastEl = document.getElementById('toast');
+let toastTimer=null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 1300);
+}
+
+/* === Confetti (Option B, CSS-based) === */
+function cssConfettiBurst(count = 140){
+  const colors = ['#000c53','#ffe200','#ec3237','#ffffff'];
+  for (let i=0;i<count;i++){
+    const d = document.createElement('div');
+    d.className = 'confetti-piece';
+    d.style.left = (Math.random()*100)+'vw';
+    d.style.background = colors[i % colors.length];
+    d.style.animationDelay = (Math.random()*0.3)+'s';
+    d.style.transform = `rotate(${Math.random()*180}deg)`;
+    document.body.appendChild(d);
+    setTimeout(()=> d.remove(), 1700);
+  }
+}
+
+/* ---------------------------
+   Popup handling (kept)
+----------------------------*/
+const popup = document.getElementById('popup');
+const popupTitle = document.getElementById('popup-title');
+const popupText  = document.getElementById('popup-text');
+const popupStats = document.getElementById('popup-stats');
+const popupImage = document.getElementById('popup-image');
+const popupBtn   = document.getElementById('popup-btn');
+
+function showPopup({title="What happens next…", text="", effects={}, next=null, image=null}){
+  popupTitle.textContent = title;
+  popupText.innerHTML = text;
+  popupStats.textContent = formatEffects10(effects);
+
+  if (popupImage){
+    if (image){
+      popupImage.style.display = "block";
+      popupImage.src = image;
+      popupImage.alt = "CCA photo";
+    } else {
+      popupImage.style.display = "none";
+      popupImage.src = "";
+    }
+  }
+
+  state.pending = { effects, next };
+  popup.style.display = "flex";
+}
+
+popupBtn.addEventListener('click', ()=>{
+  popup.style.display = "none";
+  const { effects, next } = state.pending || {};
+  applyEffects10(effects||{});
+  state.step += 1;
+  fadeSwap(()=>{
+    if(next === "epilogue"){
+      const epi = epilogueContent();
+      renderEvent(epi);
+    } else if (next === "reset"){
+      resetGame();
+    } else {
+      const nextEvt = EVENTS.find(e=>e.id===next);
+      renderEvent(nextEvt);
+    }
+  });
+});
+
+/* ---------------------------
+   Content (Events)
+----------------------------*/
+const EVENTS = [
+  /* 0 — Mindfulness starter */
+  {
+    id:"mindful_start",
+    banner:"assets/mindfulness_banner.png",
+    kicker:"Mindful Mornings",
+    title:"Box Breathing or Window Calmness?",
+    text:`Before lessons begin, your Form Teachers invite you to settle your mind.
+          You can try a quick box-breathing exercise, or simply gaze gently out the window at the garden.`,
+    choices:[
+      {
+        label:"I close my eyes and practise steady box breathing — in, hold, out, hold — until my thoughts line up and I feel ready for the day.",
+        consequence:`Breathe in… hold for four seconds… breathe out slowly. Your breath finds a calm rhythm and your focus sharpens; you feel composed as you begin your day of learning.`,
+        effects:{ mindfulness:+1, discipline:+1 },
+        next:"recess_choice"
+      },
+      {
+        label:"I rest my gaze on the field outside, breathing naturally as I notice colours, sounds, and people arriving with different stories.",
+        consequence:`As you gaze out the window, the scene of sun-bathed trees and birds chirping grounds you; you feel present and aware of those around you.`,
+        effects:{ mindfulness:+1, empathy:+1 },
+        next:"recess_choice"
+      }
+    ]
+  },
+
+  /* 1 — Recess activities */
+  {
+    id:"recess_choice",
+    banner:"assets/recess_field_banner.png",
+    kicker:"Recess",
+    title:"What will you do during recess?",
+    text:`The bell rings. You spot friends heading three ways — the field, the Indoor Sports Hall, and the canteen.`,
+    choices:[
+      {
+        label:"I dash onto the field and play quick passes with my classmates, communicating and covering for each other as the game heats up.",
+        consequence:`You face off in a 5-a-side match against students from another class, sprinting down the field and calling for the ball. You read your teammates and keep going even when you’re tired — teamwork builds resilience.`,
+        effects:{ resilience:+2, adaptability:+2, mindfulness:-1 },
+        next:"leadership_board"
+      },
+      {
+        label:"I pick up a badminton racket at the ISH and work up a sweat in a friendly game, adjusting my footwork point by point.",
+        consequence:`You pair up for doubles in the Indoor Sports Hall, trading sharp smashes and tight net shots. Your reactions sharpen and you adapt under pressure, thinking on your feet with every stroke.`,
+        effects:{ adaptability:+2, resilience:+2 },
+        next:"leadership_board"
+      },
+      {
+        label:"I head to the canteen, queue patiently, and enjoy a simple meal while chatting kindly with new friends at the table.",
+        consequence:`You enjoy a hearty plate of briyani followed by a warm waffle in Beatty’s airy, café-style canteen. Between bites and laughter, you feel recharged.`,
+        effects:{ mindfulness:+2, empathy:+1 },
+        next:"leadership_board"
+      }
+    ]
+  },
+
+  /* 2 — Leadership boards */
+  {
+    id:"leadership_board",
+    banner:"assets/leadership_banner.png",
+    kicker:"Student Leadership",
+    title:"Where will you serve?",
+    text:`Student leadership helps the school run with heart and purpose. Which board calls to you?`,
+    choices:[
+      {
+        label:"I step up as a Students Councillor to represent student voice, plan events, and uphold the Beatty spirit every day.",
+        consequence:`You lead the Secondary One Orientation Camp — organising ice-breakers, campfire songs and team-building games that bring new Beattyians together. You learn to lead by example while listening to others with empathy.`,
+        effects:{ discipline:+1, empathy:+1 },
+        next:"after_school"
+      },
+      {
+        label:"I become a Peer Support Leader to check in on classmates, offer care, and build a class culture where all students belong.",
+        consequence:`You plan a class bonding activity where everyone shares a favourite holiday memory. The laughter and stories fill the room, and class spirit deepens through simple moments of care.`,
+        effects:{ empathy:+2, mindfulness:+1 },
+        next:"after_school"
+      },
+      {
+        label:"I immerse myself as a Sports Leader, organising termly challenges and refereeing inter-class competitions to keep everyone active.",
+        consequence:`Whistles blow as you referee a volleyball match — players dive, balls fly and the court buzzes with energy. You stay alert, calling points fairly and keeping the game fun for all.`,
+        effects:{ adaptability:+2, resilience:+1 },
+        next:"after_school"
+      },
+      {
+        label:"I join as an Eco-Steward to champion green habits and lead projects to care for our shared home - Earth.",
+        consequence:`You guide groups around MacRitchie Reservoir, sharing facts about local flora and fauna with curious kindergarteners and retirees alike. Each conversation reminds you of your role as a steward who connects generations.`,
+        effects:{ empathy:+1, discipline:+1 },
+        next:"after_school"
+      },
+      {
+        label:"I serve as a Class-Committee Leader to coordinate duties, routines, and little moments that keep our class running smoothly.",
+        consequence:`You help your classmates create colourful class decoration and beam with pride when everyone turns up in ethnic attire on Racial Harmony Day.`,
+        effects:{ adaptability:+1, discipline:+1 },
+        next:"after_school"
+      },
+    ]
+  },
+
+  /* 3 — After-school programmes */
+  {
+    id:"after_school",
+    banner:"assets/afterschool_banner.png",
+    kicker:"Talent Development",
+    title:"What will you explore after school?",
+    text:`Beatty buzz does not end at the bell. Which programme tempts you today?`,
+    choices:[
+      {
+        label:"I join the Beatty Current Affairs Network to role-play world leaders, debate global issues, and see problems from many angles.",
+        consequence:`You take on the role of a delegate at a Model United Nations conference, crafting speeches and negotiating resolutions with other schools. Through debate, you learn to see global issues from many sides.`,
+        effects:{ empathy:+2, adaptability:+2 },
+        next:"cca_choice"
+      },
+      {
+        label:"I stay for Science competitions and keep working through tough problems one idea at a time.",
+        consequence:`You persevere through different experiments, diligently working to solve real-world problems. You strengthen mindfulness and resilience as you break big challenges into smaller steps.`,
+        effects:{ mindfulness:+1, resilience:+1 },
+        next:"cca_choice"
+      },
+      {
+        label:"I jump into inter-class sports, cheering teammates and pushing myself to give my best for the team.",
+        consequence:`You run across the court for a quick counter-attack, toss a pass and celebrate a neat finish. The cheers and friendly rivalry fill the air.`,
+        effects:{ resilience:+2, empathy:+1 },
+        next:"cca_choice"
+      },
+    ]
+  },
+
+  /* 4 — CCA choices */
+  {
+    id:"cca_choice",
+    banner:"assets/cca_banner.png",
+    kicker:"CCA",
+    title:"Choose your CCA",
+    text:`CCAs are the heartbeat of school life. Picture yourself in one of these CCAs:`,
+    choices:[
+      {
+        label:"I commit to a Uniformed Group, mastering drills and teamwork with pride as I prepare for parades and contingents.",
+        consequence:`Under the morning sun, you march smartly as part of the National Day Parade Contingent while the whole school watches with pride. Discipline and resilience shine through every precise step. You wonder what it would like to be the Parade Commander.`,
+        effects:{ discipline:+2, resilience:+2 },
+        image:"assets/cca_uniformed.jpg",
+        next:"arts_choice"
+      },
+      {
+        label:"I join a Performing Arts group, stepping into the spotlight to move an audience and bring stories to life.",
+        consequence:`You find your voice on stage and stay present in the moment — performing at the <em>President’s Challenge</em>, proudly representing Beatty through music and movement. Seeing your CCA President lead the way, you aspire to be like her.`,
+        effects:{ empathy:+2, mindfulness:+1 },
+        image:"assets/cca_performing_arts.jpg",
+        next:"arts_choice"
+      },
+      {
+        label:"I choose a Sports CCA, training regularly and competing with grit at National School Games and beyond.",
+        consequence:`At MacRitchie Reservoir, you paddle fiercely in the National School Games canoeing finals, muscles burning as you edge past your rival by half a boat length. Victory tastes like hard-earned resilience. You aspire to one day inspire your juniors as Team Captain.`,
+        effects:{ resilience:+2, discipline:+1 },
+        image:"assets/cca_sports.jpg",
+        next:"arts_choice"
+      },
+      {
+        label:"I take up InfoComm to run the tech behind big events, learning systems and problem-solving.",
+        consequence:`Backstage, you manage the audio, screen and microphones for an assembly. Every cue you run keeps the event smooth — you are the master behind the tech who makes it all happen.`,
+        effects:{ adaptability:+2, discipline:+1 },
+        image:"assets/cca_infocomm.jpg",
+        next:"arts_choice"
+      },
+    ]
+  },
+
+  /* 5 — Creative / Artistic options */
+  {
+    id:"arts_choice",
+    banner:"assets/arts_banner.png",
+    kicker:"Create",
+    title:"Make and share your voice",
+    text:`Art speaks. Choose a creative outlet to build confidence and community.`,
+    choices:[
+      {
+        label:"I produce a podcast at HeartBeat Radio, planning questions, interviewing guests, and editing a story that matters.",
+        consequence:`You record an episode on sustainability for Beatty’s HeartBeat Radio to raise awareness about caring for the planet. Empathy becomes your on-air voice.`,
+        effects:{ empathy:+1, discipline:+1 },
+        next:"major_prog"
+      },
+      {
+        label:"I write a song and record it in a studio, refining lyrics and melody before performing it for an audience.",
+        consequence:`You compose a melody for Beatty’s upcoming 75th Anniversary Celebration, refining lyrics till you are happy. You stay calm and present as you polish your song and dream of performing it live.`,
+        effects:{ mindfulness:+2, resilience:+1 },
+        next:"major_prog"
+      },
+      {
+        label:"I design and 3D-print a prototype, refining several versions until the model works the way I imagined.",
+        consequence:`In the Makerspace@Beatty, you design and 3D-print playful little dinosaurs alongside practical items like phone stands and hooks. You test, tweak and adapt until every print comes out perfectly.`,
+        effects:{ adaptability:+2, discipline:+1 },
+        next:"major_prog"
+      },
+    ]
+  },
+
+  /* 6 — Major school programmes */
+  {
+    id:"major_prog",
+    banner:"assets/major_programme_banner.png",
+    kicker:"Spotlight",
+    title:"A moment on stage",
+    text:`Choose a signature school moment to be part of:`,
+    choices:[
+      {
+        label:"I perform a guitar tribute on Teachers’ Day, playing with heart to thank those who guide us daily.",
+        consequence:`You perform <em>“A Million Dreams”</em> at the Teachers’ Day celebration, each phrase carrying gratitude to the mentors who guide you. The hall erupts in applause.`,
+        effects:{ mindfulness:+2, empathy:+1 },
+        next:"via_choice"
+      },
+      {
+        label:"I emcee at Annual Awards Day, keeping the flow smooth and adapting to last-minute changes with a smile.",
+        consequence:`You juggle cues, transitions and voices, staying composed in front of a crowd and delivering a polished performance as the Master of Ceremony for Beatty’s Annual Awards Day.`,
+        effects:{ adaptability:+2, discipline:+1 },
+        next:"via_choice"
+      },
+      {
+        label:"I lead a National Day singalong, stepping up to energise the school with a joyful, united voice.",
+        consequence:`Spotlights glow as you step forward and belt out an energetic rendition of <em>“Stand Up for Singapore”</em>. The crowd joins in, voices rising together in a sea of red and white pride.`,
+        effects:{ empathy:+2, resilience:+1 },
+        next:"via_choice"
+      },
+    ]
+  },
+
+  /* 7 — Values-in-Action (VIA) */
+  {
+    id:"via_choice",
+    banner:"assets/via_banner.png",
+    kicker:"Active Contributor",
+    title:"Values-in-Action",
+    text:`Service builds character. Which project will you drive?`,
+    choices:[
+      {
+        label:"I learn sign language to be inclusive and support classmates with hearing loss.",
+        consequence:`You learn basic Singapore Sign Language to connect with classmates with hearing loss, then sign the National Pledge during National Day. Empathy comes alive through action.`,
+        effects:{ empathy:+2, discipline:+1 },
+        next:"epilogue"
+      },
+      {
+        label:"I organise a clothing upcycling drive so fashion can be fun and sustainable.",
+        consequence:`Boxes overflow with colourful shirts and dresses as students excitedly transform outfits into tote bags. You guide the flow with enthusiasm — sustainability made joyful.`,
+        effects:{ adaptability:+2, resilience:+2 },
+        next:"epilogue"
+      },
+      {
+        label:"I help plan fun games to bring joy to the elderly.",
+        consequence:`You prepare mini-games and performances — from balloon toss to sing-along numbers — and grateful smiles ripple through the crowd. The best moments are the thank-yous you’ll remember.`,
+        effects:{ empathy:+2, mindfulness:+1 },
+        next:"epilogue"
+      },
+    ]
+  },
+];
+
+/* ---------------------------
+   Dynamic Epilogue (values + stewardship)
+----------------------------*/
+function buildReflection(history, stats){
+  const lines = [];
+  const has = (kw)=> history.some(h => h.toLowerCase().includes(kw));
+
+  if (has("referee") || has("sport leader") || has("inter-class"))
+    lines.push("I’ve grown more adaptable under pressure — from refereeing inter-class games to keeping play fair and fun.");
+  if (has("model united nations") || has("current affairs"))
+    lines.push("I’ve learnt to see issues from different perspectives, balancing views before making a call.");
+  if (has("infocomm"))
+    lines.push("Backstage work taught me calm focus and dependable discipline when tech keeps everyone on track.");
+  if (has("performing arts") || has("singalong") || has("guitar"))
+    lines.push("Performing helped me stay present and connect with an audience through empathy and mindfulness.");
+  if (has("uniformed group"))
+    lines.push("Parade training strengthened my discipline and resilience — excellence in every precise step.");
+  if (has("sign language") || has("hearing loss"))
+    lines.push("Learning sign language showed me how inclusion turns empathy into daily action.");
+  if (has("upcycling"))
+    lines.push("Running a clothing upcycling drive reminded me that stewardship is practical and joyful.");
+  if (has("golden age fiesta"))
+    lines.push("Serving our seniors taught me to notice small details and bring warmth to shared spaces.");
+  if (has("3d-print") || has("makerspace"))
+    lines.push("Designing and iterating in the makerspace trained me to test ideas, adapt quickly, and keep improving.");
+  if (has("heartbeat radio") || has("podcast"))
+    lines.push("Podcasting sharpened my listening and gave me a platform to raise meaningful stories.");
+
+  if (!lines.length){
+    const ordered = Object.entries(stats).sort((a,b)=>b[1]-a[1]).map(([k])=>k);
+    const toLabel = {discipline:"discipline", resilience:"resilience", empathy:"empathy", adaptability:"adaptability", mindfulness:"mindfulness"};
+    lines.push(`I strengthened my ${toLabel[ordered[0]]} and ${toLabel[ordered[1]]} through the choices I made today.`);
+  }
+
+  return `As I look back on my Beatty journey, I realise I’m becoming a purpose-driven steward. ${lines.join(" ")}`;
+}
+
+function epilogueContent(){
+  const labels = {
+    discipline:"Discipline 💪",
+    resilience:"Resilience 🧱",
+    empathy:"Empathy 👁️",
+    adaptability:"Adaptability 🤖",
+    mindfulness:"Mindfulness 🧘"
+  };
+
+  const highlights = state.history.map(h => `• ${h}`).join("<br>");
+  const reflection = buildReflection(state.history, state.stats);
+
+  return {
+    id:"epilogue",
+    banner:"assets/epilogue_banner.jpg",
+    kicker:"Epilogue",
+    title:"Your Beatty Journey — Just the Beginning",
+    text:`
+      ${reflection}
+      <br><br>
+      <strong>Your possible Beatty Journey:</strong><br>
+      ${highlights || "You explored widely and kept an open mind."}
+      <br><br>
+      <strong>How you grew (0–10):</strong><br>
+      ${labels.discipline}: <em>${state.stats.discipline}</em> &nbsp;|&nbsp;
+      ${labels.resilience}: <em>${state.stats.resilience}</em> &nbsp;|&nbsp;
+      ${labels.empathy}: <em>${state.stats.empathy}</em> &nbsp;|&nbsp;
+      ${labels.adaptability}: <em>${state.stats.adaptability}</em> &nbsp;|&nbsp;
+      ${labels.mindfulness}: <em>${state.stats.mindfulness}</em>
+      <br><br>
+      Keep choosing with courage and kindness — your Beatty story is ready to be written. 🌟
+    `,
+    closingBanner:"assets/closing_banner.jpg",   // NEW: closing banner path (change if needed)
+    choices:[
+      { label:"🔁 Play again (try a different path)", effects:{}, next:"reset" },
+    ]
+  };
+}
+
+/* ---------------------------
+   Rendering
+----------------------------*/
+function renderEvent(evt){
+  const banner = document.getElementById('banner');
+  const kicker = document.getElementById('kicker');
+  const title  = document.getElementById('title');
+  const text   = document.getElementById('text');
+  const choices= document.getElementById('choices');
+  const prologueBrand = document.getElementById('prologue-brand');
+  const closingBanner = document.getElementById('closing-banner');
+
+  banner.src = evt.banner;
+  banner.alt = `Banner placeholder for: ${evt.title} (${evt.banner})`;
+  kicker.textContent = evt.kicker || "";
+  title.textContent = evt.title || "";
+  text.innerHTML = evt.text || "";
+
+  choices.innerHTML = "";
+  evt.choices.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = opt.label; // full sentence
+    btn.addEventListener('click', ()=>{
+      // Lock all buttons
+      [...choices.querySelectorAll('button')].forEach(b=>b.disabled=true);
+      // Record history
+      state.history.push(opt.label);
+
+      // Prologue special: no popup — toast + auto-advance
+      if (evt.id === "prologue"){
+        toast("You’re ready — let’s go!");
+        setTimeout(()=>{
+          fadeSwap(()=>{
+            const nextEvt = EVENTS.find(e=>e.id===opt.next);
+            renderEvent(nextEvt);
+          });
+        }, 300);
+        return;
+      }
+
+      // For all other scenes, show popup with consequence and stat changes (and optional image)
+      showPopup({
+        text: opt.consequence || "You continue your journey.",
+        effects: opt.effects || {},
+        next: opt.next,
+        image: opt.image || null
+      });
+    });
+    choices.appendChild(btn);
+  });
+
+  // Show logo only on prologue
+  if (prologueBrand){
+    if (evt.id === "prologue"){
+      prologueBrand.style.display = "block";
+    } else {
+      prologueBrand.style.display = "none";
+    }
+  }
+
+  // Show closing banner only on epilogue
+  if (closingBanner){
+    if (evt.id === "epilogue" || evt.kicker === "Epilogue"){
+      closingBanner.style.display = "block";
+      closingBanner.src = evt.closingBanner || "assets/closing_banner.jpg";
+      closingBanner.alt = "Closing banner photo";
+    } else {
+      closingBanner.style.display = "none";
+      closingBanner.src = "";
+    }
+  }
+
+  // Fire confetti once when Epilogue loads
+  if ((evt.id === 'epilogue' || evt.kicker === 'Epilogue') && !state.didConfetti) {
+    cssConfettiBurst(140);
+    state.didConfetti = true;
+  }
+}
+
+function startGame(){
+  state.step = 0;
+  state.history = [];
+  state.stats = { discipline:4, resilience:4, empathy:4, adaptability:4, mindfulness:4 };
+  state.didConfetti = false;
+  updateHUD();
+
+  const prologue = {
+    id:"prologue",
+    banner:"assets/gate_banner.jpg",
+    kicker:"Prologue",
+    title:"Entering the School Gate",
+    text:`The morning sun glows over the navy-and-gold crest. You step through Beatty Secondary School’s gate, a little nervous, mostly excited.
+          Today’s Open House is your first taste of life as a Beattyian — choices, challenges, and chances to grow.`,
+    choices:[
+      { label:"I take a deep breath and begin my Beatty journey.", consequence:"", effects:{}, next:"mindful_start" }
+    ]
+  };
+  renderEvent(prologue);
+}
+
+function resetGame(){
+  state.didConfetti = false;   // allow confetti again next playthrough
+  fadeSwap(()=> startGame());
+}
+
+/* ---------------------------
+   Init
+----------------------------*/
+window.addEventListener('DOMContentLoaded', startGame);
+</script>
+</body>
+</html>
