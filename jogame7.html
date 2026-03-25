@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shadows of Syonan</title>
+<style>
+  :root{
+    --bg:#07080b;
+    --bg2:#0d0f14;
+    --panel:#11141b;
+    --panel2:#161a23;
+    --line:#252b38;
+    --ink:#f6f7fb;
+    --muted:#b8bfcb;
+    --red:#d81f32;
+    --red2:#ff4458;
+    --white:#ffffff;
+    --good:#9fe3a9;
+    --gold:#f3d27a;
+    --bad:#ff9da7;
+    --shadow:0 24px 70px rgba(0,0,0,.55);
+    --r:20px;
+  }
+
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    color:var(--ink);
+    font:16px/1.6 Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background:
+      radial-gradient(1000px 700px at 12% 12%, rgba(216,31,50,.16), transparent 55%),
+      radial-gradient(900px 650px at 88% 8%, rgba(255,255,255,.05), transparent 55%),
+      radial-gradient(900px 650px at 70% 100%, rgba(216,31,50,.10), transparent 55%),
+      linear-gradient(180deg, var(--bg), var(--bg2));
+  }
+
+  .app{
+    max-width:1500px;
+    margin:22px auto;
+    padding:0 16px 18px;
+  }
+
+  .top{
+    border:1px solid var(--line);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+  padding-bottom:4px;
+  }
+
+  .banner{
+    padding:18px 20px 14px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    min-width:280px;
+  }
+
+  .sun{
+    width:52px;height:52px;border-radius:16px;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(216,31,50,.98) 0 46%, transparent 48%),
+      radial-gradient(circle at 50% 50%, rgba(255,255,255,.09) 0 100%);
+    border:1px solid rgba(255,255,255,.12);
+    box-shadow:0 12px 36px rgba(216,31,50,.28);
+    flex:0 0 auto;
+  }
+
+  h1{
+    margin:0;
+    font-size:30px;
+    line-height:1.1;
+    letter-spacing:.3px;
+    font-weight:800;
+  }
+  .subtitle{
+    margin-top:6px;
+    color:#aeb6c7;
+    font-size:13px;
+  }
+
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-end;
+    gap:8px;
+  }
+
+  .btn{
+    appearance:none;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    color:var(--ink);
+    padding:10px 13px;
+    border-radius:14px;
+    cursor:pointer;
+    transition:.16s ease;
+    font-size:13px;
+    font-weight:600;
+  }
+  .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.05)}
+  .btn:active{transform:translateY(0)}
+  .btn.danger{
+    border-color:rgba(216,31,50,.34);
+    background:rgba(216,31,50,.09);
+  }
+  .btn.primary{
+    border-color:rgba(216,31,50,.42);
+    background:rgba(216,31,50,.13);
+  }
+  .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:7px 10px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,.03);
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .timeline{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .timeline progress{
+    width:260px;
+    height:12px;
+    appearance:none;
+    -webkit-appearance:none;
+    border-radius:999px;
+    overflow:hidden;
+  }
+  .timeline progress::-webkit-progress-bar{background:#0a0c10}
+  .timeline progress::-webkit-progress-value{
+    background:linear-gradient(90deg, rgba(216,31,50,.88), rgba(255,68,88,.98));
+  }
+
+  .quoteBar{
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:10px;
+    align-items:center;
+    padding:14px 22px;
+    background:linear-gradient(90deg, rgba(216,31,50,.10), rgba(255,255,255,.02));
+    border-bottom:1px solid var(--line);
+  }
+  .quoteText{
+    font-size:15px;
+    line-height:1.55;
+    font-style:italic;
+  }
+  .quoteMeta{
+    color:var(--muted);
+    font-size:12px;
+    white-space:nowrap;
+  }
+
+  .main{
+    display:grid;
+    grid-template-columns:1.7fr 1fr;
+    gap:22px;
+    margin-top:18px;
+  }
+
+  .panel{
+    border:1px solid var(--line);
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+    padding-bottom:4px;
+  }
+
+  .panelHead{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    padding:16px 18px 12px;
+    border-bottom:1px solid var(--line);
+  }
+
+  .counter{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:6px;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+  }
+
+  .title{
+    margin:0;
+    font-size:34px;
+    line-height:1.15;
+    font-weight: 800;
+    letter-spacing:.3px;
+  }
+
+  .era{
+    margin-top:6px;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .body{
+    padding:20px 24px 22px;
+    max-width: 760px;
+  }
+
+ .story{
+  margin:0 0 14px 0;
+  font-size:17px;
+  line-height:1.65;
+  color:#cfd6e3;
+  max-width:65ch;
+}
+
+  .imageCard{
+  margin:16px 0 18px;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  overflow:hidden;
+  background:#0a0c10;
+  box-shadow:0 8px 28px rgba(0,0,0,.35);
+}
+
+.imageCard img{
+  display:block;
+  width:100%;
+  max-height:360px;
+  object-fit:cover;
+  background:#0a0c10;
+}
+  .imageCap{
+    padding:10px 12px;
+    font-size:12px;
+    color:var(--muted);
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+
+  .choices{
+    list-style:none;
+    margin-top:20px;
+    padding-top:16px;
+    padding-left:0;
+    display:grid;
+    gap:14px;
+    border-top:1px solid var(--line);
+  }
+
+.choice{
+  width:100%;
+  text-align:left;
+  padding:16px 18px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  font-size:16px;
+  line-height:1.5;
+  color:var(--ink);
+  transition:all .15s ease;
+}
+
+.choice:hover{
+  border-color:#e11d2e;
+  transform:translateX(6px);  
+  background:rgba(255,255,255,.08);
+  box-shadow:0 6px 18px rgba(0,0,0.35);
+  
+}
+  .choice:disabled{
+    opacity:.58;
+    cursor:not-allowed;
+    transform:none;
+  }
+
+  .kbd{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:30px;
+  height:30px;
+  border-radius:8px;
+  margin-right:12px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(0,0,0,.45);
+  font-size:14px;
+  font-weight:800;
+}
+
+  .startPad{
+    padding:18px;
+  }
+  .startTitle{
+    margin:0 0 6px 0;
+    font-size:19px;
+  }
+  .startSub{
+    margin:0 0 14px 0;
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  .cardGrid{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:16px;
+}
+.raceCard{
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+  padding:14px;
+
+  cursor:pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+
+.raceCard:hover{
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.45);
+  border-color:#e11d2e;
+  background: linear-gradient(180deg,#0f1420,#0b0f18);
+}
+  .raceName{
+    font-weight:800;
+    font-size:16px;
+  }
+  .raceDesc{
+    color:var(--muted);
+    font-size:13px;
+    margin:.45rem 0 .8rem 0;
+  }
+   .side{
+  position:sticky;
+  top:20px;
+  height:fit-content;
+}
+  .sidePad{
+    padding:18px;
+  }
+  .sideTitle{
+    margin:0 0 12px 0;
+    font-size:18px;
+    font-weight: 800;
+    letter-spacing:.2px;
+  }
+
+  .stat{
+    margin:14px 0 16px;
+  }
+.statHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:8px;
+  color:var(--muted);
+  font-size:16px;
+}
+
+.statHead span{
+  font-weight:600;
+  font-size:16px;
+}
+
+.statHead b{
+  color:var(--ink);
+  font-size:20px;
+  font-weight:800;
+}
+
+  progress{
+    width:100%;
+    height:14px;
+    border-radius:999px;
+    overflow:hidden;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  progress::-webkit-progress-bar{background:#0a0c10}
+  .mor::-webkit-progress-value{background:linear-gradient(90deg, rgba(159,227,169,.75), rgba(159,227,169,1))}
+  .mon::-webkit-progress-value{background:linear-gradient(90deg, rgba(243,210,122,.75), rgba(243,210,122,1))}
+  .sus::-webkit-progress-value{background:linear-gradient(90deg, rgba(255,157,167,.7), rgba(216,31,50,.98))}
+  .hp::-webkit-progress-value{background:linear-gradient(90deg, rgba(255,180,180,.7), rgba(255,68,88,.98))}
+
+  .noteBox{
+    margin-top:14px;
+    padding:12px 12px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.10);
+    background:rgba(255,255,255,.03);
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .overlay{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:rgba(0,0,0,.72);
+    z-index:100;
+  }
+
+  .modal{
+    width:min(840px, 96vw);
+    border-radius:24px;
+    border:1px solid rgba(255,255,255,.12);
+    overflow:hidden;
+    background:linear-gradient(180deg, rgba(13,15,20,.985), rgba(9,10,14,.99));
+    box-shadow:0 28px 90px rgba(0,0,0,.72);
+  }
+
+  .modalHead{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:16px 18px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .modalTitle{
+    margin:0;
+    font-size:17px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .dot{
+    width:10px;height:10px;border-radius:999px;background:var(--red);
+    box-shadow:0 0 0 6px rgba(216,31,50,.14);
+  }
+  .modalBody{
+    padding:16px 18px 18px;
+  }
+  .modalText{
+    margin:0 0 12px 0;
+    color:#eef2f9;
+    font-size:16px;
+  }
+  .teacher{
+    margin:0 0 12px 0;
+    color:var(--muted);
+    font-size:13px;
+    padding-left:10px;
+    border-left:3px solid rgba(255,255,255,.10);
+    display:none;
+  }
+  .modalActions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:12px;
+  }
+
+  textarea{
+    width:100%;
+    min-height:120px;
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,.12);
+    background:#0a0c10;
+    color:var(--ink);
+    padding:12px 12px;
+    resize:vertical;
+    outline:none;
+  }
+  textarea:focus{
+    border-color:rgba(216,31,50,.45);
+    box-shadow:0 0 0 6px rgba(216,31,50,.12);
+  }
+
+  .muted{color:var(--muted)}
+  .small{font-size:12px}
+  .hidden{display:none !important}
+
+  @media (max-width:1400px){
+    .main{grid-template-columns:1fr}
+    .timeline progress{width:150px}
+    .quoteBar{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="banner">
+      <div class="brand">
+        <div class="sun" aria-hidden="true"></div>
+        <div>
+          <h1>Shadows of Syonan</h1>
+          <div class="subtitle">Singapore 1942–1945 • A civilian choose-your-path story</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="pill timeline">
+          <span id="dateBadge">📅</span>
+          <progress id="timebar" max="11" value="0"></progress>
+          <span>Sep 1945</span>
+        </div>
+        <button id="soundBtn" class="btn">🔊 Sound: On</button>
+      </div>
+    </div>
+
+    <div class="quoteBar">
+      <div class="quoteText" id="quoteText"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <section class="panel side">
+      <div id="startScreen" class="startPad">
+        <h2 class="startTitle">Choose your character</h2>
+        <p class="startSub">Some events are shared. Some choices and risks differ depending on whether you play as a Chinese, Malay, or Indian civilian in occupied Singapore.</p>
+
+        <div class="cardGrid">
+          <div class="raceCard">
+            <div class="raceName">A) Chinese — Tan Wei Ming, 16</div>
+            <div class="raceDesc">Chin Swee Road shophouse lane. Father is a clerk. Mother sells snacks. Younger sister at home. After the surrender, your community faces especially sharp danger.</div>
+            <button class="btn primary" onclick="selectRace('chinese')">Play as Tan Wei Ming</button>
+          </div>
+
+          <div class="raceCard">
+            <div class="raceName">B) Malay — Ahmad Firdaus, 16</div>
+            <div class="raceDesc">Kampong Glam / Beach Road area. Father does dock work. Mother worries about reputation and safety. You are not outside the system of fear, but your position is different.</div>
+            <button class="btn primary" onclick="selectRace('malay')">Play as Ahmad Firdaus</button>
+          </div>
+
+          <div class="raceCard">
+            <div class="raceName">C) Indian — Arjun Raman, 16</div>
+            <div class="raceDesc">Serangoon Road area. Your uncle once served under the British. Later, pressure linked to the Indian National Army may shape your choices.</div>
+            <button class="btn primary" onclick="selectRace('indian')">Play as Arjun Raman</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="storyScreen" class="hidden">
+        <div class="panelHead">
+          <div>
+            <div class="counter" id="counter"></div>
+            <h2 class="title" id="title"></h2>
+            <div class="era" id="era"></div>
+          </div>
+        </div>
+
+        <div class="body">
+          <p class="story" id="storyText"></p>
+
+          <div class="imageCard" id="eventImageCard">
+            <img id="eventImage" alt="Event image placeholder">
+            <div class="imageCap" id="eventImageCap">Replace this with a photo for the event.</div>
+          </div>
+
+          <ol class="choices" id="choices"></ol>
+
+            <div>Choose one option to continue.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="endingScreen" class="hidden body">
+        <h2 class="title" style="font-size:20px;margin:0 0 10px 0">Epilogue</h2>
+        <div id="endingText" style="white-space:pre-wrap"></div>
+        <div style="height:12px"></div>
+        <textarea id="finalReflection" placeholder="How do you feel about how your story ended? Why?"></textarea>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <div class="sidePad">
+        <h3 class="sideTitle">Your Attributes</h3>
+
+        <div class="stat">
+          <div class="statHead"><span>😇 Morality</span><b id="morVal">7</b></div>
+          <progress id="morBar" class="mor" max="10" value="7"></progress>
+        </div>
+
+        <div class="stat">
+          <div class="statHead"><span>💰 Money</span><b id="monVal">5</b></div>
+          <progress id="monBar" class="mon" max="10" value="5"></progress>
+        </div>
+
+        <div class="stat">
+          <div class="statHead"><span>👁️ Suspicion</span><b id="susVal">3</b></div>
+          <progress id="susBar" class="sus" max="10" value="3"></progress>
+        </div>
+
+        <div class="stat" style="margin-bottom:0">
+          <div class="statHead"><span>❤️ Health</span><b id="hpVal">10</b></div>
+          <progress id="hpBar" class="hp" max="10" value="10"></progress>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- CONSEQUENCE MODAL -->
+<div id="consequenceOverlay" class="overlay">
+  <div class="modal">
+    <div class="modalHead">
+      <h3 class="modalTitle"><span class="dot"></span> Consequence</h3>
+    </div>
+    <div class="modalBody">
+      <p class="modalText" id="consequenceText"></p>
+
+      <div class="imageCard" id="consequenceImageCard">
+        <img id="consequenceImage" alt="Consequence image placeholder">
+        <div class="imageCap" id="consequenceImageCap">Replace this with an image illustrating the consequence.</div>
+      </div>
+
+<div class="modalActions">
+  <button id="consequenceAcknowledge" class="btn primary">Continue</button>
+    </div>
+</div>
+
+
+
+<script>
+
+const $ = (id) => document.getElementById(id);
+
+/* =========================
+   GENERATED SOUND EFFECTS
+========================= */
+let audioCtx = null;
+let soundEnabled = true;
+
+function ensureAudio(){
+  if(!soundEnabled) return null;
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    audioCtx = new AC();
+  }
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function tone({type="sine", start=440, end=440, dur=0.12, vol=0.04, attack=0.005, release=0.06}={}){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(start, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(end, ctx.currentTime + dur);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur + release);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + dur + release + 0.02);
+}
+function clickSfx(){ tone({type:"triangle", start:900, end:680, dur:0.045, vol:0.03, release:0.04}); }
+function consequenceSfx(){ tone({type:"sine", start:220, end:160, dur:0.18, vol:0.045, release:0.12}); }
+function warningSfx(){
+  tone({type:"square", start:360, end:320, dur:0.10, vol:0.025, release:0.06});
+  setTimeout(()=>tone({type:"square", start:360, end:320, dur:0.10, vol:0.025, release:0.06}), 120);
+}
+function interrogationSfx(){ tone({type:"sawtooth", start:180, end:120, dur:0.22, vol:0.03, release:0.12}); }
+function endingSfx(){
+  tone({type:"triangle", start:330, end:220, dur:0.24, vol:0.035, release:0.18});
+  setTimeout(()=>tone({type:"triangle", start:262, end:196, dur:0.26, vol:0.028, release:0.20}), 180);
+}
+function airRaidSfx(){
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(420, ctx.currentTime);
+  osc.frequency.linearRampToValueAtTime(740, ctx.currentTime + 0.45);
+  osc.frequency.linearRampToValueAtTime(420, ctx.currentTime + 0.9);
+  gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.035, ctx.currentTime + 0.05);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.95);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start();
+  osc.stop(ctx.currentTime + 1.0);
+}
+
+/* =========================
+   STATE
+========================= */
+const state = {
+  race: null,
+  stage: 0,
+  locked: false,
+  morality: 7,
+  money: 5,
+  suspicion: 3,
+  health: 10,
+  flags: {
+    dead:false,
+    joinedRes:false,
+    joinedWork:false,
+    heardElizabeth:false,
+    informantComplicit:false
+  }
+};
+
+const DATES = [
+  "8 Feb 1942",
+  "10–12 Feb 1942",
+  "15 Feb 1942",
+  "15 Feb 1942",
+  "late Feb–early Mar 1942",
+  "Mar–Jun 1942",
+  "mid 1942",
+  "late 1942–early 1943",
+  "late 1942–1943",
+  "1943",
+  "1944–1945",
+  "Aug–Sep 1945"
+];
+
+const historicalVoices = [
+  {
+    text: "“We now see the error of our ways and heartily repent.”",
+    meta: "From your uploaded source on the forced OCA declaration"
+  },
+  {
+    text: "“Of our own free will we offer the sum of 50 million dollars as token of sincerity.”",
+    meta: "From your uploaded source on the Japanese-imposed ‘donation’"
+  },
+  {
+    text: "Memory of the occupation in Singapore is often built from hunger, fear, silence, and survival.",
+    meta: "Paraphrased from oral-history themes"
+  }
+];
+let currentQuote = 0;
+
+/* =========================
+   RNG HELPERS
+========================= */
+function chance(p){ return Math.random() < p; }
+function sookAChance(){ return 0.18 + state.suspicion * 0.025; }
+function sookBChance(){ return 0.10 + state.suspicion * 0.020; }
+function sookHideChance(){ return 0.12 + state.suspicion * (1/60); }
+function sookPapersChance(){ return 0.15 + state.suspicion * (1/60); }
+function stealCaughtChance(){ return 0.25 + state.suspicion * (1/30); }
+function robbedAfterChance(){ return 0.20; }
+function resistCaughtChance(){ return 0.18 + state.suspicion * 0.025; }
+function interrogationHarshChance(){ return state.suspicion / 14; }
+function interrogationSilentChance(){ return state.suspicion / 10; }
+function interrogationLieChance(){ return state.suspicion / 9; }
+function interrogationFatalChance(){ return state.suspicion / 12; }
+
+/* =========================
+   CONTENT
+========================= */
+function getEvent(index){
+  const race = state.race;
+  const eventImage = `PLACEHOLDER_event_${String(index).padStart(2,"0")}`;
+  const consequenceBase = (choiceKey) => `PLACEHOLDER_event_${String(index).padStart(2,"0")}_${choiceKey}_consequence`;
+
+  const common = {
+    0: {
+      title: "Prologue",
+      era: "Night on the edge of invasion",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of a wartime neighbourhood or a family sheltering together.",
+      text: "It is night, and you squeeze into your neighbour’s house because the adults believe it is safer to stay together. In the distance, you hear shelling and the low drone of aircraft. Someone whispers that if the fighting reaches the city, water and food may quickly become a problem.",
+      note: "Civilians often prepared water, shelter, and simple warning plans before the city fell.",
+      choices: [
+        { key:"A", label:"Help the adults fill pails and tubs with water and place them in the kitchen and corridor.",
+          delta:{morality:+1,suspicion:-1}, consequence:"Your family feels more prepared, and the adults praise you for staying calm when others are panicking.", cimg: consequenceBase("A"), ccap:"Replace this with an image showing improvised wartime preparations." },
+        { key:"B", label:"Suggest a simple plan so that neighbours check on the elderly and warn one another if bombing begins.",
+          delta:{morality:+1,suspicion:+1}, consequence:"People feel less alone, but you also realise that being organised can later look suspicious under military rule.", cimg: consequenceBase("B"), ccap:"Replace this with an image of neighbours gathering or discussing plans." },
+        { key:"C", label:"Climb upstairs to look toward the harbour lights and flashes of shellfire.",
+          delta:{suspicion:+1,health:-1}, consequence:"An adult drags you back down sharply. You learn at once that curiosity can become danger very quickly.", cimg: consequenceBase("C"), ccap:"Replace this with an image of shelling or distant flashes." },
+        { key:"D", label:"Slip out briefly to collect leftover candles and tins from a nearby shopfront.",
+          delta:{money:+1,morality:-1,suspicion:+1}, consequence:"You return with supplies, but you worry that if anyone noticed, rumours may follow you later.", cimg: consequenceBase("D"), ccap:"Replace this with an image of abandoned shopfronts or emergency supplies." }
+      ]
+    },
+
+    1: {
+      title: "Air Raids",
+      era: "10–12 Feb 1942",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of an air-raid shelter, trench, or civilians during bombing.",
+      text: "Sirens wail. People run toward a school shelter clutching blankets and pails. Bombs fall somewhere near the docks. The ground shakes, dust drifts down from the ceiling, and children cry while adults shout at them to stay quiet.",
+      note: "Air raids damaged homes and infrastructure; shelters and trenches became vital for civilians.",
+      sfx: "air",
+      choices: [
+        { key:"A", label:"Support an elderly neighbour into the shelter and give him a damp cloth for his mouth.",
+          delta:{morality:+2,suspicion:+1,health:-1}, consequence:"He survives the rush. Some people make space when they see what you are doing.", cimg: consequenceBase("A"), ccap:"Replace this with an image of civilians helping one another during an air raid." },
+        { key:"B", label:"Keep close to your family and focus on getting everyone low to the ground.",
+          delta:{suspicion:-1}, consequence:"Your family stays safe, but you feel helpless hearing others outside the shelter.", cimg: consequenceBase("B"), ccap:"Replace this with an image of people crouching in a shelter." },
+        { key:"C", label:"Run back briefly to grab savings hidden under the bed before returning.",
+          delta:{money:+1,suspicion:+2,health:-1,morality:-1}, consequence:"You make it back, but your family is furious because one more minute could have cost your life.", cimg: consequenceBase("C"), ccap:"Replace this with an image of a house or room during emergency evacuation." },
+        { key:"D", label:"Speak calmly and tell the children to stay low and breathe slowly so they do not panic.",
+          delta:{morality:+1,suspicion:-1}, consequence:"The shelter becomes a little quieter, and people stop pushing.", cimg: consequenceBase("D"), ccap:"Replace this with an image of shelter discipline or civilians huddled together." }
+      ]
+    },
+
+    2: {
+      title: "Fall of Singapore",
+      era: "15 Feb 1942",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of Japanese troops entering Singapore, the Cathay Building, or wartime street signage.",
+      text: "The British surrender. Japanese soldiers soon patrol the streets. Singapore is renamed Syonan-to. New signs appear on roads and buildings. People whisper that the Japanese Military Administration is based at the Cathay Building, and the Kempeitai operate from the old YMCA on Stamford Road, feared for interrogations.",
+      note: "Renaming and new institutions signalled the start of Japanese Military Administration.",
+      choices: [
+        { key:"A", label:"Stay indoors, keep the curtains drawn, and tell your family to speak softly.",
+          delta:{suspicion:-1}, consequence:"You avoid attention for now, but fear thickens inside the house.", cimg: consequenceBase("A"), ccap:"Replace this with a photo of shuttered homes or wartime curfew life." },
+        { key:"B", label:"Watch quietly from the end of the lane to understand what is changing.",
+          delta:{suspicion:+1}, consequence:"A soldier glances your way. You step back quickly and feel your heart race.", cimg: consequenceBase("B"), ccap:"Replace this with a street-view image with troops or civilians watching." },
+        { key:"C", label:"Ask a departing British soldier what civilians should do now.",
+          delta:{morality:+1,suspicion:+1}, consequence:"He admits they cannot protect you anymore. The responsibility is now yours.", cimg: consequenceBase("C"), ccap:"Replace this with an image of retreating Allied troops or civilian uncertainty." },
+        { key:"D", label:"Take medicine and tins from an abandoned shop whose owner has fled.",
+          delta:{money:+1,morality:-1,suspicion:+1}, consequence:"You gain supplies, but guilt and rumours follow you, especially if anyone noticed.", cimg: consequenceBase("D"), ccap:"Replace this with an image of abandoned wartime shops." }
+      ]
+    },
+
+    3: {
+      title: "POWs Marched to Changi",
+      era: "15 Feb 1942",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of POWs or civilians watching a wartime march.",
+      text: "Hours after surrender, long lines of British and Australian prisoners of war march toward Changi. Their uniforms hang loose and some carry the wounded. Guards shout at civilians who step too close. The road feels strangely quiet, as if people are afraid to be seen feeling sympathy.",
+      note: "Public marches displayed power; civilians often stayed silent to avoid attention.",
+      choices: [
+        { key:"A", label:"Step back and do nothing, keeping your eyes down.",
+          delta:{morality:-1,suspicion:-1}, consequence:"You stay safe, but the silence feels heavy and uncomfortable.", cimg: consequenceBase("A"), ccap:"Replace this with an image of civilians standing aside." },
+        { key:"B", label:"Jeer with a group that is laughing at the prisoners.",
+          delta:{morality:-2}, consequence:"You feel a brief thrill, then shame when you see a prisoner stagger.", cimg: consequenceBase("B"), ccap:"Replace this with a wartime street crowd image." },
+        { key:"C", label:"Quietly pass a bottle of water when a guard turns away.",
+          delta:{morality:+2,money:-1,suspicion:+2,health:-1}, consequence:"A prisoner mouths “thank you”. You walk away shaking, afraid someone noticed. Later, you hear whispered stories about people like Elizabeth Choy who helped prisoners and paid dearly for it.", cimg: consequenceBase("C"), ccap:"Replace this with an image suggesting compassion under danger.", onChoose:()=>{state.flags.heardElizabeth=true;} },
+        { key:"D", label:"Offer bread openly, thinking hunger is hunger.",
+          delta:{morality:+2,money:-1,suspicion:+3}, consequence:"A guard shouts. You drop the bread and retreat, frightened and angry at yourself.", cimg: consequenceBase("D"), ccap:"Replace this with an image of soldiers and civilians in tense proximity." }
+      ]
+    },
+
+    6: {
+      title: "School under Occupation",
+      era: "mid 1942",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of wartime school children, textbooks, or assembly.",
+      text: "School changes. Students bow toward the Emperor’s portrait, learn Nippon-go, and sing Japanese songs to show loyalty. It no longer feels like ordinary schooling; it feels like training people to obey.",
+      note: "Education was used to shape thought and behaviour through language, songs, and rituals.",
+      choices: [
+        { key:"A", label:"Follow instructions carefully because you do not want to endanger your family.",
+          delta:{suspicion:-1,morality:-1}, consequence:"You stay safer, but you feel numb, as if part of you is shrinking.", cimg: consequenceBase("A"), ccap:"Replace this with an image of school conformity under occupation." },
+        { key:"B", label:"Participate proudly, volunteer to lead the singing, and tell your family what you learned.",
+          delta:{suspicion:-1,money:+1,morality:-2}, consequence:"A teacher praises you publicly. You feel protected for now, but some classmates begin to avoid you.", cimg: consequenceBase("B"), ccap:"Replace this with an image of school assembly or propaganda learning." },
+        { key:"C", label:"Refuse to bow during assembly, keeping your chin up even while your hands shake.",
+          delta:{morality:+2,suspicion:+3,health:-1}, consequence:"A soldier scolds you in front of everyone. Your parents later warn you that bravery can become danger.", cimg: consequenceBase("C"), ccap:"Replace this with an image of assembly or military discipline." },
+        { key:"D", label:"Pretend to be unwell and skip school for a day.",
+          delta:{suspicion:+1}, consequence:"A warning letter arrives. Your parents look worried, and pressure tightens at home.", cimg: consequenceBase("D"), ccap:"Replace this with an image of absence, family anxiety, or a warning note." }
+      ]
+    },
+
+    7: {
+      title: "Propaganda and Controlled News",
+      era: "late 1942–early 1943",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of wartime newspapers, posters, or public notices.",
+      text: "Newspapers praise Japanese victories and push the slogan “Asia for Asians”, claiming Japan will lead Asians against Western rule. People whisper about forbidden Allied broadcasts. The danger is not only what the news says — it is who might report you for listening to the wrong news.",
+      note: "Media control shaped public opinion; foreign broadcasts were risky and forbidden.",
+      choices: [
+        { key:"A", label:"Read the official newspaper and repeat safe phrases when asked.",
+          delta:{suspicion:-1,morality:-1}, consequence:"You appear cooperative, but you feel you are swallowing lies to survive.", cimg: consequenceBase("A"), ccap:"Replace this with a photo of propaganda papers or posters." },
+        { key:"B", label:"Listen secretly to Allied radio at night, keeping the volume low.",
+          delta:{suspicion:+2,morality:+1}, consequence:"You feel hope hearing a different story, but fear rises because someone might notice.", cimg: consequenceBase("B"), ccap:"Replace this with an image of a hidden radio or dimly lit room." },
+        { key:"C", label:"Write a short update by hand and pass it to two trusted neighbours.",
+          delta:{suspicion:+2,morality:+2}, consequence:"You build solidarity, but the risk feels like a weight on your chest.", cimg: consequenceBase("C"), ccap:"Replace this with an image of handwritten notes or secret exchange." },
+        { key:"D", label:"Avoid all news and focus on chores and routine.",
+          delta:{suspicion:-1}, consequence:"You feel safer, but also blind, as if living in fog.", cimg: consequenceBase("D"), ccap:"Replace this with an image of domestic routine under wartime strain." }
+      ]
+    },
+
+    9: {
+      title: "Surveillance and Pressure",
+      era: "1943",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of checkpoints, identity documents, or patrolled streets.",
+      text: "Patrols check identity cards. Curfews restrict movement. People fear being called in for questioning. You learn that even small behaviours — where you stand, who you meet, what you carry — can be interpreted as guilt.",
+      note: "Fear and surveillance shaped daily life; civilians constantly managed risk.",
+      choices: [
+        { key:"A", label:"Report to a checkpoint and answer politely, trying to look harmless.",
+          delta:{suspicion:+1}, consequence:"You may pass, but if you are already marked as suspicious, you risk being brought in for questioning.", cimg: consequenceBase("A"), ccap:"Replace this with an image of documents, checkpoints, or patrols.", onChoose:()=>{ if(state.suspicion >= 7) startInterrogation(); } },
+        { key:"B", label:"Stay home and avoid places where names are recorded.",
+          delta:{suspicion:-1}, consequence:"You reduce risk today, but your world becomes smaller and fear becomes routine.", cimg: consequenceBase("B"), ccap:"Replace this with an image of a quiet interior or shuttered home." },
+        { key:"C", label:"Take labour work because your family needs money or food, even if it drains you.",
+          delta:{money:+2,health:-2,morality:-1,suspicion:-1}, consequence:"Long hours drain your health. Survival begins to feel like a slow injury.", cimg: consequenceBase("C"), ccap:"Replace this with an image of labour, hauling, or exhausted workers." },
+        { key:"D", label:"Pay someone to keep your name off lists and away from patrol attention.",
+          delta:{money:-2,suspicion:-1,morality:-1}, consequence:"Money drops, but risk drops too. You wonder what desperation turns people into.", cimg: consequenceBase("D"), ccap:"Replace this with an image of money, papers, or quiet exchange." }
+      ]
+    },
+
+    11: {
+      title: "Liberation and Reckoning",
+      era: "Aug–Sep 1945",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of liberation crowds, rebuilding, or wartime aftermath in Singapore.",
+      text: "Japan surrenders. People celebrate, but joy is tangled with grief and anger. Some accuse collaborators. Many search for relatives who never returned. Life begins again, but memories do not return neatly to silence.",
+      note: "After occupation, communities rebuilt while carrying trauma, loss, and unresolved moral questions.",
+      choices: [
+        { key:"A", label:"Keep your family indoors until tempers cool, then help clear debris near your street.",
+          delta:{morality:+1,suspicion:-1}, consequence:"You choose safety and rebuilding, but emotions still leak into ordinary life.", cimg: consequenceBase("A"), ccap:"Replace this with an image of neighbourhood rebuilding." },
+        { key:"B", label:"Give a statement about what you witnessed, even though it makes you visible.",
+          delta:{morality:+2,suspicion:+1}, consequence:"You feel that truth matters, but you also fear how neighbours will treat you.", cimg: consequenceBase("B"), ccap:"Replace this with an image of testimony, inquiry, or official aftermath." },
+        { key:"C", label:"Speak honestly to a trusted adult about choices you regret.",
+          delta:{morality:+1}, consequence:"You feel relief and shame together. Survival, you realise, can carry moral weight.", cimg: consequenceBase("C"), ccap:"Replace this with an image of conversation or quiet reflection." },
+        { key:"D", label:"Demand repayment from those who owe you goods or money.",
+          delta:{money:+1,morality:-1,suspicion:+1}, consequence:"You recover some things, but some people call you selfish after everything.", cimg: consequenceBase("D"), ccap:"Replace this with an image of trade, repayment, or tense neighbour relations." }
+      ]
+    }
+  };
+
+  if(index === 4){
+    if(race === "chinese"){
+      return {
+        title: "Operation Sook Ching",
+        era: "late Feb–early Mar 1942",
+        image: eventImage,
+        imageCaption: "Replace this with a photo of a Sook Ching notice, screening site, or wartime crowd.",
+        text: "A notice orders Chinese males between 18 and 50 to report to screening centres. People whisper that the operation is meant to purge ‘anti-Japanese elements’ from the Chinese community. Some fear that support once given to the China Relief Fund — led by men such as Tan Kah Kee — has marked the community in Japanese eyes. At the same time, Dr Lim Boon Keng is later pressured to lead the Oversea Chinese Association and raise a forced ‘donation’ for the Japanese authorities. At the screening grounds, hooded informants and local spotters are rumoured to point people out.",
+        note: "Sook Ching targeted the Chinese community; informants and visual identification deepened fear and uncertainty.",
+        choices: [
+          { key:"A", label:"Report immediately because you fear what happens if you do not obey.",
+            delta:{morality:+1,suspicion:+1,health:-1},
+            consequence:"You wait for hours under the sun. Officers scan faces and gestures. Luck plays a part — some are released, others are taken away.",
+            cimg: consequenceBase("A"), ccap:"Replace this with a photo of queues or screening grounds.",
+            onChoose:()=>{ if(chance(sookAChance())) dieAtShore("You are pulled from the line. By nightfall, your story ends at the shoreline."); }
+          },
+          { key:"B", label:"Delay until later, hoping the crowd is smaller and the officers are less strict.",
+            delta:{suspicion:+1,health:-1},
+            consequence:"The line moves faster, but you see men taken behind a building. You cannot tell who will come back.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of a waiting crowd or tense checkpoint.",
+            onChoose:()=>{ if(chance(sookBChance())) dieAtShore("You are marked during screening. You do not return home."); }
+          },
+          { key:"C", label:"Hide for a few days at a friend’s kampung, surviving on little food.",
+            delta:{morality:+1,money:-1,suspicion:-1,health:-1},
+            consequence:"You avoid the screening for now, but every motorbike sound makes you flinch. If discovered, you may be brought in for questioning.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image of hiding in a kampung or living rough.",
+            onChoose:()=>{ if(chance(sookHideChance())) startInterrogation(); }
+          },
+          { key:"D", label:"Borrow papers and try to pass as younger, keeping your voice steady.",
+            delta:{morality:-1,suspicion:+1},
+            consequence:"The stamp lands on the card, but fear stays in your stomach. If exposed, you may face interrogation.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image of papers, stamps, or registration desks.",
+            onChoose:()=>{ if(chance(sookPapersChance())) startInterrogation(); }
+          }
+        ]
+      };
+    }
+
+    return {
+      title: "Operation Sook Ching",
+      era: "late Feb–early Mar 1942",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of a screening notice, civilians watching, or wartime streets.",
+      text: "You see Chinese men ordered to report to screening centres. Some neighbours lock their doors and speak in whispers. You realise the Chinese community is being targeted more harshly during this period, and that even watching can be risky. Rumours spread that informants are helping identify suspects.",
+      note: "Civilians navigated fear, silence, and moral pressure as violence unfolded around them.",
+      choices: [
+        { key:"A", label:"Quietly warn a Chinese neighbour and offer to watch their younger children while adults go.",
+          delta:{morality:+2,suspicion:+1},
+          consequence:"The neighbour thanks you. You also worry that someone might accuse you of helping ‘suspects’.",
+          cimg: consequenceBase("A"), ccap:"Replace this with an image of neighbours helping under pressure." },
+        { key:"B", label:"Stay away and pretend you know nothing, to protect your family.",
+          delta:{morality:-1,suspicion:-1},
+          consequence:"You are safer, but you feel uneasy as grief and rumours spread.",
+          cimg: consequenceBase("B"), ccap:"Replace this with an image of closed doors or silent streets." },
+        { key:"C", label:"Watch from a distance to understand what is happening and what rules are forming.",
+          delta:{suspicion:+1},
+          consequence:"You learn the shape of fear: long waits, shouted orders, and families separated.",
+          cimg: consequenceBase("C"), ccap:"Replace this with an image of people observing from afar." },
+        { key:"D", label:"Agree to ‘share information’ with someone who claims it will keep your street safe.",
+          delta:{money:+1,morality:-2,suspicion:+2},
+          consequence:"You feel protected for now, but sick because your words could harm someone.",
+          cimg: consequenceBase("D"), ccap:"Replace this with an image of whispered reporting or street-level suspicion.",
+          onChoose:()=>{ state.flags.informantComplicit = true; }
+        }
+      ]
+    };
+  }
+
+  if(index === 5){
+    const base = {
+      title: "Communities under Pressure",
+      era: "Mar–Jun 1942",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of neighbourhood life, a kampung street, or civilians under occupation.",
+      note: "Different communities experienced the occupation differently, but fear and moral compromise touched all."
+    };
+
+    if(race === "chinese"){
+      return {
+        ...base,
+        text: "You tell yourself to survive quietly, but anger sits close to the skin. Some people whisper Tan Kah Kee’s name when speaking about earlier support for China. Others mention Lim Boon Keng and the humiliating role the Japanese forced on him in the Oversea Chinese Association.",
+        choices: [
+          { key:"A", label:"Tell your family to stay quiet and avoid attention as much as possible.",
+            delta:{suspicion:-1,morality:-1},
+            consequence:"You reduce risk, but isolation grows and you feel the community fray.",
+            cimg: consequenceBase("A"), ccap:"Replace this with an image of a withdrawn family or shuttered home." },
+          { key:"B", label:"Seek help from a Malay or Indian friend you trust, asking them to keep watch if trouble comes.",
+            delta:{morality:+2,suspicion:+1},
+            consequence:"You feel human support, but being seen meeting can raise suspicion.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of inter-communal friendship or quiet support." },
+          { key:"C", label:"Bring porridge to a family whose father has not returned, keeping your head low.",
+            delta:{morality:+2,money:-1,suspicion:+1},
+            consequence:"They thank you softly. Your mother warns you to keep your voice low.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image of aid, porridge, or mourning at home." },
+          { key:"D", label:"Snap at a friend who seems less targeted and accuse them of not understanding.",
+            delta:{morality:-2,suspicion:+1},
+            consequence:"You release anger, but you damage trust and feel worse later.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image of tension between neighbours or friends." }
+        ]
+      };
+    }
+
+    if(race === "malay"){
+      return {
+        ...base,
+        text: "You see how fear divides neighbours. Some cooperation appears to bring safety, but you also sense how quickly safety can become compromise.",
+        choices: [
+          { key:"A", label:"Discuss with your parents whether cooperation is protection or betrayal.",
+            delta:{morality:+1},
+            consequence:"You realise people are trapped between safety and conscience.",
+            cimg: consequenceBase("A"), ccap:"Replace this with an image of family discussion or domestic uncertainty." },
+          { key:"B", label:"Distance yourself from Chinese neighbours so your family will not be linked to them.",
+            delta:{suspicion:-1,morality:-1},
+            consequence:"You feel safer, but your street becomes colder.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of social distance or divided neighbours." },
+          { key:"C", label:"Discreetly share a small portion of food with a Chinese neighbour, avoiding eyes.",
+            delta:{morality:+2,money:-1,suspicion:+1},
+            consequence:"You help someone survive, but you fear gossip and informers.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image of discreet sharing of food." },
+          { key:"D", label:"Accept a small role passing messages for local officials because it brings stability.",
+            delta:{money:+1,morality:-1,suspicion:+1},
+            consequence:"Your family benefits, but you worry you are becoming part of the system.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image suggesting low-level administrative cooperation." }
+        ]
+      };
+    }
+
+    return {
+      ...base,
+      text: "Talk begins to circulate about India, the British Empire, and what might happen if Japan defeats Britain in Asia. At the same time, you watch neighbours growing more guarded with one another.",
+      choices: [
+        { key:"A", label:"Attend a talk about India’s future and listen silently, watching who applauds.",
+          delta:{morality:+1,suspicion:+1},
+          consequence:"You feel hope and distrust at the same time.",
+          cimg: consequenceBase("A"), ccap:"Replace this with an image of a gathering, leaflet, or public speech." },
+        { key:"B", label:"Reject all politics and focus only on protecting your household.",
+          delta:{suspicion:-1},
+          consequence:"You are safer today, but uncertainty grows.",
+          cimg: consequenceBase("B"), ccap:"Replace this with an image of family life under strain." },
+        { key:"C", label:"Help a Chinese schoolmate whose father is missing, keeping it quiet.",
+          delta:{morality:+2,money:-1,suspicion:+1},
+          consequence:"You feel empathy, but you fear empathy can be punished.",
+          cimg: consequenceBase("C"), ccap:"Replace this with an image of quiet support across communities." },
+        { key:"D", label:"Repeat propaganda slogans in public because you want to look cooperative.",
+          delta:{morality:-2,suspicion:-1},
+          consequence:"Your risk may drop, but you feel you are losing yourself.",
+          cimg: consequenceBase("D"), ccap:"Replace this with an image of public slogans or propaganda posters." }
+      ]
+    };
+  }
+
+  if(index === 8){
+    const base = {
+      title: "Rationing and Shortages",
+      era: "late 1942–1943",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of ration queues, ration cards, tapioca, or wartime food shortages.",
+      note: "Shortages forced bartering, gardens, black markets, and hard moral choices. Malnutrition increased illness."
+    };
+
+    if(race === "chinese"){
+      return {
+        ...base,
+        text: "Food is rationed. People queue repeatedly because supplies are released in small amounts. Rice is often poor in quality. Hunger and malnutrition lead to illnesses such as beri-beri. Your family counts every handful.",
+        choices: [
+          { key:"A", label:"Exchange your mother’s jewellery for rice on the black market.",
+            delta:{money:-2,morality:-1,suspicion:+1,health:+1},
+            consequence:"You bring home food, but your mother stares at her empty wrists and you feel the cost in your heart.",
+            cimg: consequenceBase("A"), ccap:"Replace this with an image of black-market exchange or jewellery-for-rice trade." },
+          { key:"B", label:"Plant sweet potatoes and tapioca wherever there is space and trade quietly with neighbours.",
+            delta:{morality:+1,suspicion:-1,health:+1},
+            consequence:"It is slow but steady. Your family eats a little more.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of home-grown wartime food crops." },
+          { key:"C", label:"Steal from a storehouse at night because your sister is hungry.",
+            delta:{money:+2,morality:-2,suspicion:+2,health:-1},
+            consequence:"You run with your breath burning. If caught, punishment is harsh, and even if not caught, desperate people may rob you on the way home.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image of night theft, sacks of rice, or dark alleys.",
+            onChoose:()=>{
+              if(chance(stealCaughtChance())){
+                state.health = clamp(state.health - 3);
+                state.suspicion = clamp(state.suspicion + 1);
+                warningSfx();
+              }
+              if(chance(robbedAfterChance())){
+                state.health = clamp(state.health - 1);
+                state.money = clamp(state.money - 1);
+              }
+            }
+          },
+          { key:"D", label:"Work at a Japanese depot for food coupons, keeping your head down.",
+            delta:{money:+1,morality:-1,suspicion:-1,health:-1},
+            consequence:"You eat better, but people whisper that you are helping the occupiers.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image of depot work, coupons, or labour.",
+            onChoose:()=>{ state.flags.joinedWork = true; }
+          }
+        ]
+      };
+    }
+
+    if(race === "malay"){
+      return {
+        ...base,
+        text: "Food is rationed. People queue repeatedly because supplies are released in small amounts. Rice is often poor in quality. Hunger and malnutrition lead to illnesses such as beri-beri. At certain festive moments, some families seem to receive small extra help, and this creates quiet resentment.",
+        choices: [
+          { key:"A", label:"Queue for rations and accept small festival-linked assistance when it comes.",
+            delta:{morality:+1,suspicion:+1,health:+1},
+            consequence:"Your family eats better briefly, but you feel uneasy because others are suffering more.",
+            cimg: consequenceBase("A"), ccap:"Replace this with an image of ration queues or festive food distribution." },
+          { key:"B", label:"Share a small portion with a Chinese neighbour who looks weak, avoiding eyes.",
+            delta:{morality:+2,money:-1,suspicion:+1},
+            consequence:"You help someone survive, but you worry someone will accuse you of helping ‘suspects’.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of discreet food sharing." },
+          { key:"C", label:"Use connections to secure extra food for your family first.",
+            delta:{money:+1,morality:-2,suspicion:+1,health:+1},
+            consequence:"Your family survives more comfortably, but guilt sticks to you.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image of preferential access or favours." },
+          { key:"D", label:"Steal once at night, telling yourself everyone is desperate.",
+            delta:{money:+2,morality:-2,suspicion:+2,health:-1},
+            consequence:"If caught, punishment is harsh; if not, fear follows you home.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image of scarcity and moral desperation.",
+            onChoose:()=>{
+              if(chance(stealCaughtChance())){
+                state.health = clamp(state.health - 3);
+                state.suspicion = clamp(state.suspicion + 1);
+                warningSfx();
+              }
+              if(chance(robbedAfterChance())){
+                state.health = clamp(state.health - 1);
+                state.money = clamp(state.money - 1);
+              }
+            }
+          }
+        ]
+      };
+    }
+
+    return {
+      ...base,
+      text: "Food is rationed. People queue repeatedly because supplies are released in small amounts. Rice is often poor in quality. Hunger and malnutrition lead to illnesses such as beri-beri. Cash is less reliable than favours, bartering, and timing.",
+      choices: [
+        { key:"A", label:"Barter services and goods rather than rely on cash that is losing value.",
+          delta:{morality:+1,health:+1},
+          consequence:"Barter keeps you afloat, but you see how quickly society becomes transactional.",
+          cimg: consequenceBase("A"), ccap:"Replace this with an image of barter or exchange of goods." },
+        { key:"B", label:"Share food with a struggling Chinese friend, keeping it quiet.",
+          delta:{morality:+2,money:-1,suspicion:+1},
+          consequence:"You feel empathy, but you fear empathy can be punished.",
+          cimg: consequenceBase("B"), ccap:"Replace this with an image of friendship across communities." },
+        { key:"C", label:"Steal once at night because your family is hungry.",
+          delta:{money:+2,morality:-2,suspicion:+2,health:-1},
+          consequence:"If caught, punishment is harsh; if not, the fear does not leave your body.",
+          cimg: consequenceBase("C"), ccap:"Replace this with an image of theft under scarcity.",
+          onChoose:()=>{
+            if(chance(stealCaughtChance())){
+              state.health = clamp(state.health - 3);
+              state.suspicion = clamp(state.suspicion + 1);
+              warningSfx();
+            }
+            if(chance(robbedAfterChance())){
+              state.health = clamp(state.health - 1);
+              state.money = clamp(state.money - 1);
+            }
+          }
+        },
+        { key:"D", label:"Work at a Japanese depot for coupons, telling yourself it is only survival.",
+          delta:{money:+1,morality:-1,suspicion:-1,health:-1},
+          consequence:"You eat better, but you feel social judgement from some neighbours.",
+          cimg: consequenceBase("D"), ccap:"Replace this with an image of war depot work or food coupons.",
+          onChoose:()=>{ state.flags.joinedWork = true; }
+        }
+      ]
+    };
+  }
+
+  if(index === 10){
+    const base = {
+      title: "Banana Money and Hard Choices",
+      era: "1944–1945",
+      image: eventImage,
+      imageCaption: "Replace this with a photo of wartime currency, markets, or civilians trading under inflation.",
+      note: "Economic collapse intensified moral pressure: trust, betrayal, resistance, and visible cooperation collided."
+    };
+
+    if(race === "chinese"){
+      return {
+        ...base,
+        text: "Prices jump as military currency loses value. Some hoard. Some join small networks — passing messages, helping someone hide, sharing a little food. Others trade harder and harder to stay alive.",
+        choices: [
+          { key:"A", label:"Repay debts even though money buys less each week.",
+            delta:{morality:+2,money:-1,suspicion:-1},
+            consequence:"People respect your honesty, and someone later helps your family quietly.",
+            cimg: consequenceBase("A"), ccap:"Replace this with an image of repayment, trust, or neighbours." },
+          { key:"B", label:"Refuse to repay and keep food for your household.",
+            delta:{morality:-2,money:+1,suspicion:+1},
+            consequence:"Your family eats, but your reputation sinks and trust breaks.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of conflict over goods or debt." },
+          { key:"C", label:"Join a small resistance cell passing coded messages.",
+            delta:{morality:+2,money:-1,suspicion:+2},
+            consequence:"You feel purpose and fear at the same time. If discovered, you risk interrogation.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image suggesting secret messaging or resistance.",
+            onChoose:()=>{
+              state.flags.joinedRes = true;
+              if(chance(resistCaughtChance())) startInterrogation();
+            }
+          },
+          { key:"D", label:"Trade goods for profit between neighbourhoods.",
+            delta:{money:+2,morality:-1,suspicion:+1},
+            consequence:"Money rises, but so does attention. People start watching you.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image of trade, barter, or markets." }
+        ]
+      };
+    }
+
+    if(race === "malay"){
+      return {
+        ...base,
+        text: "Prices jump as military currency loses value. Some lean into safer cooperation. Others help neighbours quietly. Every path feels morally costly in a different way.",
+        choices: [
+          { key:"A", label:"Repay debts and keep your word because trust feels like survival.",
+            delta:{morality:+2,money:-1,suspicion:-1},
+            consequence:"Neighbours respect you, and your lane feels slightly less cold.",
+            cimg: consequenceBase("A"), ccap:"Replace this with an image of neighbourly trust or shared hardship." },
+          { key:"B", label:"Lean into safe cooperation, repeating official phrases and avoiding anyone targeted.",
+            delta:{suspicion:-1,morality:-1,money:+1},
+            consequence:"Your risk may drop, but you feel you are shrinking into someone you dislike.",
+            cimg: consequenceBase("B"), ccap:"Replace this with an image of compliant public behaviour." },
+          { key:"C", label:"Quietly help someone hide a little food from searches.",
+            delta:{morality:+2,suspicion:+2},
+            consequence:"You feel solidarity, but fear follows you home.",
+            cimg: consequenceBase("C"), ccap:"Replace this with an image of hidden food or secret assistance.",
+            onChoose:()=>{
+              if(chance(resistCaughtChance())) startInterrogation();
+            }
+          },
+          { key:"D", label:"Trade goods for profit as the currency collapses.",
+            delta:{money:+2,morality:-1,suspicion:+1},
+            consequence:"You earn more, but your name becomes visible.",
+            cimg: consequenceBase("D"), ccap:"Replace this with an image of wartime market trade." }
+        ]
+      };
+    }
+
+    return {
+      ...base,
+      text: "Prices jump as military currency loses value. For some Indians, another pressure enters: rallies and speeches linked to the Indian National Army promise a different future, but not everyone trusts what is being offered.",
+      choices: [
+        { key:"A", label:"Attend an INA rally and sign up because you believe India should not be ruled by the British.",
+          delta:{money:+1,suspicion:+1,morality:0},
+          consequence:"You gain a sense of purpose and some protection, but fear how people will judge you later.",
+          cimg: consequenceBase("A"), ccap:"Replace this with an image of an INA rally, leaflet, or Indian political mobilisation." },
+        { key:"B", label:"Refuse to join and keep your head down.",
+          delta:{suspicion:-1},
+          consequence:"You reduce risk today, but pressure and uncertainty remain.",
+          cimg: consequenceBase("B"), ccap:"Replace this with an image of domestic hesitation or refusal." },
+        { key:"C", label:"Join a small local network that passes food or messages.",
+          delta:{morality:+2,money:-1,suspicion:+2},
+          consequence:"You help others survive, but if discovered you risk interrogation.",
+          cimg: consequenceBase("C"), ccap:"Replace this with an image of secret aid, notes, or hidden supplies.",
+          onChoose:()=>{
+            state.flags.joinedRes = true;
+            if(chance(resistCaughtChance())) startInterrogation();
+          }
+        },
+        { key:"D", label:"Focus on barter and trade because cash is collapsing.",
+          delta:{money:+2,morality:-1,suspicion:+1},
+          consequence:"You keep your household afloat, but you become numb to others’ suffering.",
+          cimg: consequenceBase("D"), ccap:"Replace this with an image of barter or trading under inflation." }
+      ]
+    };
+  }
+
+  return common[index];
+}
+
+/* =========================
+   UI HELPERS
+========================= */
+function clamp(v){ return Math.max(0, Math.min(10, v)); }
+
+function updateStats(){
+  $("morVal").textContent = state.morality;
+  $("monVal").textContent = state.money;
+  $("susVal").textContent = state.suspicion;
+  $("hpVal").textContent = state.health;
+  $("morBar").value = state.morality;
+  $("monBar").value = state.money;
+  $("susBar").value = state.suspicion;
+  $("hpBar").value = state.health;
+}
+
+function rotateQuote(){
+  const q = historicalVoices[currentQuote % historicalVoices.length];
+  $("quoteText").textContent = q.text;
+  // removed quote meta
+  currentQuote++;
+}
+rotateQuote();
+setInterval(rotateQuote, 9000);
+
+function applyDelta(delta){
+  state.morality = clamp(state.morality + (delta.morality || 0));
+  state.money = clamp(state.money + (delta.money || 0));
+  state.suspicion = clamp(state.suspicion + (delta.suspicion || 0));
+  state.health = clamp(state.health + (delta.health || 0));
+}
+
+function showStoryScreen(){
+  $("startScreen").classList.add("hidden");
+  $("storyScreen").classList.remove("hidden");
+  $("endingScreen").classList.add("hidden");
+}
+
+function render(){
+  state.locked = false;
+  const ev = getEvent(state.stage);
+
+  $("counter").textContent = state.stage === 0 ? "Prologue (0/11)" : `Event ${state.stage}/11`;
+  $("title").textContent = ev.title;
+  $("era").textContent = `${DATES[state.stage]} • ${ev.era}`;
+  $("storyText").textContent = ev.text;
+  $("dateBadge").textContent = `📅 ${DATES[state.stage]}`;
+  $("timebar").value = state.stage;
+
+  $("eventImage").src = makePlaceholderSVG(ev.image, ev.title);
+  $("eventImageCap").textContent = ev.imageCaption;
+
+  const choices = $("choices");
+  choices.innerHTML = "";
+  ev.choices.forEach(choice => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.innerHTML = `<span class="kbd">${choice.key}</span>${choice.label}`;
+    btn.onclick = () => choose(choice, ev.note);
+    li.appendChild(btn);
+    choices.appendChild(li);
+  });
+
+  updateStats();
+
+  if(ev.sfx === "air") airRaidSfx();
+}
+
+function disableChoices(){
+  document.querySelectorAll(".choice").forEach(btn => btn.disabled = true);
+}
+
+function makePlaceholderSVG(name, title){
+  const label = `${name}`;
+  const text = `${title}`;
+  const svg = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
+    <defs>
+      <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#141821"/>
+        <stop offset="100%" stop-color="#0b0d12"/>
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="700" fill="url(#g)"/>
+    <circle cx="600" cy="220" r="90" fill="rgba(216,31,50,.88)"/>
+    <text x="600" y="380" text-anchor="middle" fill="#f6f7fb" font-size="38" font-family="Arial, sans-serif">${escapeXML(text)}</text>
+    <text x="600" y="430" text-anchor="middle" fill="#b8bfcb" font-size="24" font-family="Arial, sans-serif">${escapeXML(label)}</text>
+  </svg>`;
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+}
+function escapeXML(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* =========================
+   MODALS
+========================= */
+
+function openConsequence(text, note, imgName, imgCaption){
+  consequenceSfx();
+  $("consequenceText").textContent = text;
+  $("consequenceImage").src = makePlaceholderSVG(imgName, "Consequence image");
+  $("consequenceImageCap").textContent = imgCaption || "Replace this with a consequence image.";
+  $("consequenceOverlay").style.display = "flex";
+}
+function closeConsequence(){
+  $("consequenceOverlay").style.display = "none";
+
+};
+
+/* =========================
+   FLOW
+========================= */
+function choose(choice, note){
+  if(state.locked) return;
+  ensureAudio();
+  clickSfx();
+  state.locked = true;
+  disableChoices();
+
+  applyDelta(choice.delta || {});
+  if(choice.onChoose) choice.onChoose();
+  updateStats();
+
+  openConsequence(choice.consequence, note, choice.cimg, choice.ccap);
+
+  $("consequenceAcknowledge").onclick = () => {
+    closeConsequence();
+if(state.flags.dead){
+  showEnding();
+  return;
+}
+
+if(state.stage >= 11){
+  showEnding();
+  return;
+}
+
+state.stage++;
+render();
+  };
+}
+
+function dieAtShore(reason){
+  state.flags.dead = true;
+  endingSfx();
+  openConsequence(
+    reason,
+    "Sook Ching involved mass screening and executions. Fear, uncertainty, and informants shaped civilian experience.",
+    "PLACEHOLDER_terminal_death",
+    "Replace this with an image that suggests loss, finality, or memorialisation."
+  );
+  $("consequenceAcknowledge").onclick = () => {
+    closeConsequence();
+    openReflection(() => showEnding());
+  };
+}
+
+function startInterrogation(){
+  interrogationSfx();
+  openConsequence(
+    "You are brought in for questioning. The officer’s voice stays calm while your stomach knots. You feel that the wrong sentence could destroy your life.",
+    "Kempeitai interrogation created fear and forced civilians into impossible choices.",
+    "PLACEHOLDER_interrogation",
+    "Replace this with an image of interrogation, detention, or a government building interior."
+  );
+
+  $("consequenceAcknowledge").onclick = () => {
+    closeConsequence();
+    openInterrogationChoices();
+  };
+}
+
+function openInterrogationChoices(){
+  const temp = {
+    title: "Kempeitai Interrogation",
+    era: "Branch scene",
+    text: "What do you do?",
+    choices: [
+      {
+        key:"A",
+        label:"Confess to a small offence and beg for mercy.",
+        resolve:()=>{
+          if(chance(interrogationHarshChance())) applyDelta({morality:-1,suspicion:-1,health:-2});
+          else applyDelta({morality:-1,suspicion:-2,health:-1});
+          openConsequence(
+            "You are struck and humiliated, but released. You feel relief mixed with shame.",
+            "Confession could sometimes reduce suspicion, but it also rewarded coercion.",
+            "PLACEHOLDER_interrogation_A",
+            "Replace this with an image illustrating release after interrogation."
+          );
+        }
+      },
+      {
+        key:"B",
+        label:"Say nothing and keep your face blank.",
+        resolve:()=>{
+          if(chance(interrogationSilentChance())) applyDelta({suspicion:+1,health:-3});
+          else applyDelta({suspicion:+1,health:-1});
+          openConsequence(
+            "Your silence angers them. Even after you leave, your body remembers the cost.",
+            "Silence could be read as defiance and often worsened physical punishment.",
+            "PLACEHOLDER_interrogation_B",
+            "Replace this with an image of fear, bruising, or silent endurance."
+          );
+        }
+      },
+      {
+        key:"C",
+        label:"Lie convincingly and keep your story consistent.",
+        resolve:()=>{
+          if(chance(interrogationLieChance())) applyDelta({morality:-1,suspicion:+2,health:-2});
+          else applyDelta({morality:-1,suspicion:-1,health:-1});
+          openConsequence(
+            "For now, your story holds. But you leave feeling that one slip could still ruin you.",
+            "Lies could protect civilians briefly, but discovery raised suspicion sharply.",
+            "PLACEHOLDER_interrogation_C",
+            "Replace this with an image of papers, records, or tense questioning."
+          );
+        }
+      },
+      {
+        key:"D",
+        label:"Aggravate the interrogators and speak defiantly.",
+        resolve:()=>{
+          if(chance(interrogationFatalChance())){
+            dieAtShore("Your defiance seals your fate. You do not return home.");
+            return;
+          }
+          applyDelta({morality:+1,suspicion:+2,health:-4});
+          openConsequence(
+            "They beat you savagely. You limp away, but your body and mind do not leave untouched.",
+            "Defiance could feel morally powerful, but it carried severe physical risk.",
+            "PLACEHOLDER_interrogation_D",
+            "Replace this with an image of injury, aftermath, or severe punishment."
+          );
+        }
+      }
+    ]
+  };
+
+  $("title").textContent = temp.title;
+  $("era").textContent = temp.era;
+  $("storyText").textContent = temp.text;
+  $("eventImage").src = makePlaceholderSVG("PLACEHOLDER_interrogation_scene", "Interrogation");
+  $("eventImageCap").textContent = "Replace this with an image for the interrogation branch.";
+
+  const choices = $("choices");
+  choices.innerHTML = "";
+  temp.choices.forEach(c=>{
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.className = "choice";
+    btn.innerHTML = `<span class="kbd">${c.key}</span>${c.label}`;
+    btn.onclick = ()=>{
+      clickSfx();
+      disableChoices();
+      c.resolve();
+      $("consequenceAcknowledge").onclick = ()=>{
+        closeConsequence();
+        openReflection(()=>{
+          if(state.flags.dead){ showEnding(); return; }
+          if(state.stage >= 11){ showEnding(); return; }
+          state.stage++;
+          render();
+        });
+      };
+    };
+    li.appendChild(btn);
+    choices.appendChild(li);
+  });
+}
+
+/* =========================
+   ENDING
+========================= */
+function showEnding(){
+  $("storyScreen").classList.add("hidden");
+  $("endingScreen").classList.remove("hidden");
+  endingSfx();
+
+  if(state.flags.dead){
+    $("endingText").textContent =
+`⚰️ Your story ends in death.
+
+Discuss:
+• Which choices raised danger the most?
+• Where did “luck” feel unfair?
+• What does this teach us about civilian life under terror and mass screening?`;
+    return;
+  }
+
+  const out = [];
+  if(state.morality >= 8) out.push("FEELINGS: You tried to remain humane in inhumane times. Relief sits beside guilt.");
+  else if(state.morality >= 5) out.push("FEELINGS: You did what you had to. Some nights still feel heavy.");
+  else out.push("FEELINGS: Pragmatism kept you alive. You carry regret you rarely say aloud.");
+
+  if(state.suspicion >= 7) out.push("LEGACY: People remember you were often watched. Some keep their distance even after liberation.");
+  else if(state.morality >= 7) out.push("LEGACY: Neighbours remember small acts of help when food and hope were scarce.");
+  else out.push("LEGACY: You blended into the crowd. Survival was your quiet story.");
+
+  if(state.flags.joinedWork) out.push("AFTERMATH: Some whisper you were too close to the occupiers. Others shrug — everyone was hungry.");
+  if(state.flags.joinedRes) out.push("AFTERMATH: A few quietly praise your courage. Official recognition may never come.");
+  if(state.flags.informantComplicit) out.push("AFTERMATH: You are haunted by the fear that what you said may have harmed others.");
+  if(!state.flags.joinedWork && !state.flags.joinedRes && !state.flags.informantComplicit) out.push("AFTERMATH: Like many civilians, you were neither hero nor villain — just trying to endure.");
+
+  $("endingText").textContent = out.join("\n\n");
+}
+
+/* =========================
+   CONTROLS
+========================= */
+function selectRace(race){
+  ensureAudio();
+  clickSfx();
+
+  state.race = race;
+  state.stage = 0;
+  state.locked = false;
+  state.morality = 7;
+  state.money = 5;
+  state.health = 10;
+  state.suspicion = race === "chinese" ? 3 : 2;
+  state.flags = {
+    dead:false,
+    joinedRes:false,
+    joinedWork:false,
+    heardElizabeth:false,
+    informantComplicit:false
+  };
+
+  $("startScreen").classList.add("hidden");
+  $("storyScreen").classList.remove("hidden");
+  $("endingScreen").classList.add("hidden");
+  render();
+}
+
+function restart(){
+  state.race = null;
+  state.stage = 0;
+  state.locked = false;
+  state.morality = 7;
+  state.money = 5;
+  state.suspicion = 3;
+  state.health = 10;
+  state.flags = {
+    dead:false,
+    joinedRes:false,
+    joinedWork:false,
+    heardElizabeth:false,
+    informantComplicit:false
+  };
+
+  $("startScreen").classList.remove("hidden");
+  $("storyScreen").classList.add("hidden");
+  $("endingScreen").classList.add("hidden");
+  $("dateBadge").textContent = "📅";
+  $("timebar").value = 0;
+  updateStats();
+}
+
+$("soundBtn").onclick = () => {
+  soundEnabled = !soundEnabled;
+  $("soundBtn").textContent = `🔊 Sound: ${soundEnabled ? "On" : "Off"}`;
+};
+
+document.addEventListener("keydown", (e)=>{
+  const k = e.key.toLowerCase();
+  if(k === "r"){ restart(); return; }
+  if($("consequenceOverlay").style.display === "flex") return;
+  if($("reflectionOverlay").style.display === "flex") return;
+  if(state.locked) return;
+
+  const keyMap = {a:0,b:1,c:2,d:3,"1":0,"2":1,"3":2,"4":3};
+  if(!(k in keyMap)) return;
+  const buttons = [...document.querySelectorAll(".choice")];
+  if(buttons[keyMap[k]] && !buttons[keyMap[k]].disabled) buttons[keyMap[k]].click();
+});
+
+updateStats();
+</script>
+</body>
+</html>
