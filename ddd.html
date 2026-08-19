@@ -273,15 +273,15 @@
     return `
     <div class="stats">
       <div class="stat">
-        <h4>Suspicion <span>😨 ${suspicion}</span></h4>
+        <h4>Gestapo Suspicion towards You<span>😨 ${suspicion}</span></h4>
         <div class="bar"><div class="${statFillClass('suspicion', suspicion)}" style="width:${suspicion}%"></div></div>
       </div>
       <div class="stat">
-        <h4>Morality & Courage <span>❤️ ${morality}</span></h4>
+        <h4>Your Morality & Courage <span>❤️ ${morality}</span></h4>
         <div class="bar"><div class="${statFillClass('morality', morality)}" style="width:${morality}%"></div></div>
       </div>
       <div class="stat">
-        <h4>Privilege <span>🛡️ ${privilege}</span></h4>
+        <h4>Your Privilege in Germany <span>🛡️ ${privilege}</span></h4>
         <div class="bar"><div class="${statFillClass('privilege', privilege)}" style="width:${privilege}%"></div></div>
       </div>
     </div>`;
@@ -834,9 +834,9 @@
 
     const summary = `
       <div class="center small muted" style="margin:4px 0 10px">
-        <span class="tag">Final Suspicion: ${suspicion}</span>
+        <span class="tag">Final Gestapo Suspicion towards You: ${suspicion}</span>
         <span class="tag">Final Morality & Courage: ${morality}</span>
-        <span class="tag">Final Privilege: ${privilege}</span>
+        <span class="tag">Final Your Privilege in Germany: ${privilege}</span>
       </div>
     `;
 
