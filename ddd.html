@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Between Duty and Defiance</title>
-  <meta name="description" content="Interactive historical simulation set in Berlin (1933–1943). Navigate suspicion, morality, and privilege under Nazi rule."/>
+  <meta name="description" content="An interactive historical simulation set in Berlin (1933–1943). Navigate suspicion, morality, and privilege under Nazi rule."/>
   <style>
     :root{
       --bg:#111;
@@ -360,13 +360,13 @@
     }
     if(privilege >= 90 && !modelShown){
       modelShown = true;
-      alerts.push({type:'good', text: "You are praised in local propaganda as a “Model Aryan Youth.” Your family receives public notice."});
+      alerts.push({type:'good', text: "You are praised in local propaganda as a “Model Aryan Youth.” Your family receives public notice and a letter from the local Nazi government official."});
     }
 
     // Suspicion warnings
     if(suspicion >= 40 && !warnedOnce){
       warnedOnce = true;
-      alerts.push({type:'warn', text: "A local party official visits your family, advising ‘better attitude’ at school."});
+      alerts.push({type:'warn', text: "A local party official visits your family, advising you to have a ‘better attitude’ at school."});
     }
     // Interrogation
     if(suspicion >= 70 && !interrogatedOnce){
@@ -526,8 +526,8 @@
       <h2>Event 3 – Night of the Long Knives</h2>
       <div class="date">June 1934</div>
       <div class="narrative">
-        Rumors: arrests in the night, gunshots no one heard. Our task: paste posters praising “order restored.”
-        The city exhales, but not with relief.
+        Rumors: arrests in the night, gunshots no one heard, the Brownshirts neutered. Our task: paste posters praising “order restored.”
+        As the sun rises, the city exhales, but not with relief.
       </div>
       ${statsView()}
       ${renderChoices([
@@ -558,13 +558,13 @@
       <h2>Event 4 – Youth Activities</h2>
       <div class="date">1934–1935</div>
       <div class="narrative">
-        ${isBoy ? "Parade drills, compass marches, fireside songs." : "Cooking lessons, first-aid drills, eugenics lectures wrapped as ‘health’."}
-        Tonight there’s a required meeting; across the hall, our Jewish neighbors have been threatened.
+        ${isBoy ? "Parade drills, compass marches, fireside songs." : "Cooking lessons, first-aid drills, eugenics lectures wrapped as ‘health education’."}
+        Tonight there’s a required meeting for all members; across the hall, our Jewish neighbors have been threatened.
       </div>
       ${statsView()}
       ${renderChoices([
         {id:'skipHelp', label:"Skip the meeting to help your Jewish neighbors pack and calm their children."},
-        {id:'attend',   label:"Attend quietly, speak little, do your duty."},
+        {id:'attend',   label:"Attend quietly, speak little, do your duty with mediocrity."},
         {id:'lead',     label:`Lead the ${isBoy ? "drill and songs" : "activities"} with enthusiasm.`}
       ], 'chooseEvent4', eventIndex)}
       ${alertsView(alerts)}
@@ -589,12 +589,12 @@
       <h2>Event 5 – Nuremberg Laws</h2>
       <div class="date">September 1935</div>
       <div class="narrative">
-        The laws are posted: who may marry whom, who counts as a person. A ‘loyalty roll’ goes around the classroom.
+        The Nuremberg laws are posted: who may marry whom, who counts as a person, who remains a citizen. A ‘loyalty roll’ where you can affirming your commitment to the laws is passed around the classroom.
       </div>
       ${statsView()}
       ${renderChoices([
         {id:'refuseWalk', label:"Refuse to sign and walk your Jewish classmates home."},
-        {id:'signQuiet',  label:"Sign quietly; eyes down."},
+        {id:'signQuiet',  label:"Sign quietly and quickly; eyes down."},
         {id:'signLoud',   label:"Sign eagerly and volunteer to read the proclamation aloud."}
       ], 'chooseEvent5', eventIndex)}
       ${alertsView(alerts)}
@@ -620,13 +620,13 @@
       <div class="date">November 1938</div>
       <div class="narrative">
         Glass like frost across the sidewalks. Shops smashed. Some cheer; some hide.
-        A party man hands you a sack and a grin.
+        A Nazi party man hands you a sack and a grin.
       </div>
       ${statsView()}
       ${renderChoices([
-        {id:'returnGoods', label:"Sneak looted goods back to a ransacked family after dark."},
+        {id:'returnGoods', label:"Sneak looted goods back to a ransacked Jewish family after dark."},
         {id:'standWatch',  label:"Stand watch and do nothing else."},
-        {id:'lootDeliver', label:"Loot and deliver items to party officials."}
+        {id:'lootDeliver', label:"Loot Jewish houses and shops with fervor, and deliver valuable items to party officials."}
       ], 'chooseEvent6', eventIndex)}
       ${alertsView(alerts)}
       <div class="footer"><span class="tag">Pogrom</span><span class="small">Silence can be shelter—or consent.</span></div>
@@ -658,10 +658,10 @@
     const choices = res ? [
       {id:'hideMany', label:"Slip inside and hide as many banned books as you can in sacks."},
       {id:'burnWorth',label:"Attend and throw only worthless scrap to the fire."},
-      {id:'burnAll',  label:"Burn all publicly, shouting slogans so you aren’t suspected."}
+      {id:'burnAll',  label:"Burn all books publicly, shouting slogans so you aren’t suspected."}
     ] : [
-      {id:'pretendSick', label:"Pretend to be sick and avoid the event."},
-      {id:'leadBurn',    label:"Lead the burning with zeal and speeches."},
+      {id:'pretendSick', label:"Pretend to be sick *coughs* and avoid the event."},
+      {id:'leadBurn',    label:"Lead the book burning with passion, zeal and speeches."},
       {id:'oversee',     label:"Oversee attendance but avoid throwing books yourself."}
     ];
 
@@ -698,8 +698,8 @@
       <h2>Event 8 – Edelweiss Pirates</h2>
       <div class="date">1942–1943</div>
       <div class="narrative">
-        In the parks, a few youths wear forbidden hair and songs. They pass notes, mark walls, guide the lost.
-        A contact asks if you’ll help after dark.
+        In the parks, a few youths from the Edelweiss Pirates wear forbidden long hair and songs. They pass notes, mark walls with symbols damning the Nazis, guide the lost.
+        A contact asks if you’ll help them with their mission after dark.
       </div>
       ${statsView()}
       ${renderChoices([
@@ -733,18 +733,18 @@
       <div class="date">1943</div>
       <div class="narrative">
         ${res
-          ? "Sirens howl. In the cellar shelter, you glimpse paper-wrapped bundles: the hidden books. A warden eyes you."
-          : "The square fills for a ‘morale evening.’ You’re handed a list of ‘degenerate authors’ to denounce from the stage."}
+          ? "Sirens howl. In the cellar shelter, you glimpse paper-wrapped bundles: the hidden banned books. A Nazi warden eyes you."
+          : "The square fills for a ‘morale evening.’ You are handed a list of ‘degenerate authors’ to denounce from the stage."}
       </div>
       ${statsView()}
       ${renderChoices(res ? [
         {id:'saveCache', label:"Smuggle the bundles under coats to a safer cellar before the all-clear."},
         {id:'leave',     label:"Leave them. Survival first."},
-        {id:'hideOne',   label:"Hide only a single volume in your clothing."}
+        {id:'hideOne',   label:"Hide only a single volume of the books in your clothing."}
       ] : [
         {id:'soften', label:"Read the list flatly, cut the worst lines, and end early."},
         {id:'refuse', label:"Refuse to read. Hand back the paper in front of everyone."},
-        {id:'perform',label:"Denounce loudly; call for renewed zeal and informers."}
+        {id:'perform',label:"Denounce these communists and Jew-lovers loudly; call for renewed zeal and informers to expose these deviants."}
       ], 'chooseEvent9', eventIndex)}
       ${alertsView(alerts)}
       <div class="footer"><span class="tag">${res ? "Shelter" : "Stage"}</span><span class="small">${res ? "What we save is what survives us." : "Words can be weapons."}</span></div>
@@ -775,14 +775,14 @@
       <div class="date">Summer–Autumn 1943</div>
       <div class="narrative">
         The radio voice is thinner now. Faces at school are missing. ${isBoy
-          ? "Older boys leave in uniforms; the rest of us drill in rubble."
+          ? "Older boys leave in gray-green uniforms; the rest of us drill in rubble."
           : "We roll bandages, run soup kitchens, and write letters for the wounded."}
-        A recruiter presses a form into my palm.
+        A recruiter from the military presses a form into my palm.
       </div>
       ${statsView()}
       ${renderChoices([
         {id:'serveFront', label: isBoy ? "Volunteer for front-line service training." : "Volunteer full-time for war-support drives."},
-        {id:'aidQuiet',   label:"Request assignment to civil aid and keep your head low."},
+        {id:'aidQuiet',   label:"Request assignment to civil aid where you will help with search and rescue and keep your head low."},
         {id:'divert',     label:"Use your post to divert supplies to families in danger."}
       ], 'chooseEvent10', eventIndex)}
       ${alertsView(alerts)}
@@ -810,7 +810,7 @@
 
     if(wasArrested){
       fateTitle = "Game Over – Arrest";
-      epilogue = `The train shudders through the countryside. Numbers replace names.
+      epilogue = `The train shudders through the countryside, barreling towards a distant land. Amidst the tears and groans, you hear mutterings of prison camps. Numbers replace names.
       The world will remember what was done here—and by whom.`;
     }else{
       // Determine outcome based on totals and thresholds
@@ -819,13 +819,13 @@
         Families remember a knock at the right hour, a door left unlatched, a sack of books ready to travel.`;
       }else if(morality>=70 && suspicion>=70){
         epilogue = `Your courage brought the state to your door more than once.
-        Somehow, you remained free—barely. The city keeps your secrets in its rubble.`;
+        Somehow, you remained free — barely. The bombed carcass of the city of Berlin keeps your secrets in its rubble.`;
       }else if(privilege>=90 && morality<=30){
         epilogue = `Your face smiled from posters as the tide turned.
         Privilege shielded you then; later, it weighed like lead. History writes in ink that does not dry.`;
       }else if(privilege>=70 && morality<50){
         epilogue = `You rose in rank and ration. You obeyed, and were rewarded.
-        You told yourself it was only survival. The mirror remembers more.`;
+        You told yourself it was only survival. The mirror remembers more. Thinking about confronting your sins in the afterlife sends a chill down your spine.`;
       }else{
         epilogue = `You drifted between fear and silence. You survived.
         Survival is not the same as innocence—but it is a beginning.`;
@@ -847,7 +847,7 @@
       ${statsView()}
       ${summary}
       <div class="alerts">
-        <div class="alert info">This simulation portrays life under a dictatorship for historical/educational purposes.</div>
+        <div class="alert info">This historically authetic simulation portrays life under a dictatorship for educational purposes to develop students' historical empathy for historical actors .</div>
       </div>
       <div class="choices">
         <button class="btn" onclick="startScreen()">Play Again</button>
